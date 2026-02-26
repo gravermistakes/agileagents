@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 import boto3
 import json
+import os
 
 router = APIRouter()
 

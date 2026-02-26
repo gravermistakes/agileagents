@@ -120,20 +120,6 @@ async def deploy_multiple_functions(config: FunctionConfig):
     except ClientError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import Optional
-import boto3
-import json
-import os
-
-management_router = APIRouter()
-
-class SingleInvokeConfig(BaseModel):
-    function_name: str
-    payload: dict
-    region: Optional[str] = None
-
 @management_router.post("/invoke-lambda")
 async def invoke_lambda(config: SingleInvokeConfig):
     try:

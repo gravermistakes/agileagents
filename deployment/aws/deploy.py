@@ -25,6 +25,13 @@ async def install_aws_cli():
     subprocess.run(["sudo", "./aws/install"], check=True)
     subprocess.run(["rm", "-rf", "awscliv2.zip", "aws"], check=True)
 
+# Async helper to run a shell command
+async def run_subprocess(command: str):
+    result = subprocess.run(command.split(), capture_output=True, text=True)
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, command, result.stdout, result.stderr)
+    return result
+
 
 # Define the logger
 logger = logging.getLogger(__name__)
@@ -76,9 +83,9 @@ async def list_security_groups(region: Optional[str] = None):
         raise HTTPException(status_code=500, detail=f"An error occurred while listing security groups: {str(e)}")
 
 
-#docker deploy endpoint 
+#docker deploy endpoint
 @deploy_router.post("/dockerdeploy")
-async def deploy(request: DeployRequest):
+async def docker_deploy(request: DeployRequest):
     try:
         # Ensure Docker is running
         docker_running = subprocess.run(["docker", "info"], capture_output=True, text=True)

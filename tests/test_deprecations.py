@@ -3,6 +3,7 @@ import warnings
 from fastapi import FastAPI
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from fastapi.testclient import TestClient
+from typing import Optional
 
 # Define Pydantic models to simulate your use case
 
