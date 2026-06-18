@@ -1,0 +1,6 @@
+Test 1: String literal
+Test 2: Slice = Hello
+Test 3: Length correct
+Test 4: Equality works
+Test 5: Byte access works
+All string tests complete.

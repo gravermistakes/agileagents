@@ -1,0 +1,7 @@
+PASS: stack buffer write/read [0]
+PASS: stack buffer write/read [255]
+PASS: stack buffer write/read [128]
+PASS: multiple stack buffers
+PASS: stack buffers don't overlap
+PASS: 4KB stack buffer
+All arena tests complete.
