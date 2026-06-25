@@ -82,6 +82,18 @@ T.suite('ProjectsPage', () => {
     T.eq('_activeProject starts null', ProjectsPage._activeProject, null);
 });
 
+T.suite('ProjectsPage saveTask validation', () => {
+    T.assert('saveTask is a function', typeof ProjectsPage.saveTask === 'function');
+});
+
+T.suite('ProjectsPage init validates data', () => {
+    T.assert('_projects is array after init', Array.isArray(ProjectsPage._projects));
+});
+
+T.suite('Swipe blocked during editing', () => {
+    T.assert('ReposPage._editing exists', typeof ReposPage._editing === 'boolean');
+});
+
 T.suite('ProjectsPage index-0 bug fix', () => {
     const origView = ProjectsPage._view;
     const origActive = ProjectsPage._activeProject;

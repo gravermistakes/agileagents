@@ -1,4 +1,4 @@
-const CACHE_NAME = 'phonedev-v7';
+const CACHE_NAME = 'phonedev-v8';
 const STATIC_ASSETS = [
     './',
     './index.html',

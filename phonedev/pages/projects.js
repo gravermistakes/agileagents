@@ -8,7 +8,9 @@ const ProjectsPage = {
 
     async init() {
         const data = await Storage.getJSON('projects');
-        if (data) this._projects = data;
+        if (Array.isArray(data)) {
+            this._projects = data.filter(p => p && typeof p.name === 'string' && Array.isArray(p.tasks));
+        }
     },
 
     async _save() {
@@ -188,8 +190,10 @@ const ProjectsPage = {
     },
 
     async saveTask(taskIdx) {
+        const text = document.getElementById('edit-task-text').value.trim();
+        if (!text) { UI.toast('Task cannot be empty'); return; }
         const project = this._projects[this._activeProject];
-        project.tasks[taskIdx].text = document.getElementById('edit-task-text').value.trim();
+        project.tasks[taskIdx].text = text;
         project.tasks[taskIdx].note = document.getElementById('edit-task-note').value;
         project.tasks[taskIdx].status = document.getElementById('edit-task-status').value;
         await this._save();

@@ -47,7 +47,7 @@ const App = {
             const dx = e.changedTouches[0].clientX - this._touchStartX;
             const dy = e.changedTouches[0].clientY - this._touchStartY;
             if (Math.abs(dx) < 80 || Math.abs(dy) > Math.abs(dx) * 0.7) return;
-            if (ChatPage._streaming) return;
+            if (ChatPage._streaming || ReposPage._editing) return;
 
             const idx = this._pages.indexOf(this.currentPage);
             if (dx > 0 && idx > 0) {

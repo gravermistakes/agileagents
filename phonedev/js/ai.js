@@ -251,6 +251,7 @@ const AI = {
             } else {
                 fullReply = await this._streamOpenAI(userMessage, onChunk, systemPrompt);
             }
+            if (!fullReply) throw new Error('Empty response — may be blocked by content filter');
             this._messages.push({ role: 'assistant', content: fullReply });
             await Storage.setJSON('chat_history', this._messages);
             return fullReply;
