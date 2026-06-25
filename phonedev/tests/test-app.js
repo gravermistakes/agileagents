@@ -42,6 +42,22 @@ T.suite('ReposPage state', () => {
     T.eq('detects json', ReposPage._getLang('package.json'), 'json');
 });
 
+T.suite('ReposPage editor', () => {
+    T.assert('startEdit is a function', typeof ReposPage.startEdit === 'function');
+    T.assert('cancelEdit is a function', typeof ReposPage.cancelEdit === 'function');
+    T.assert('insertSymbol is a function', typeof ReposPage.insertSymbol === 'function');
+    T.assert('showCommitDialog is a function', typeof ReposPage.showCommitDialog === 'function');
+    T.assert('commitChanges is a function', typeof ReposPage.commitChanges === 'function');
+    T.assert('_simpleDiff is a function', typeof ReposPage._simpleDiff === 'function');
+
+    const diff = ReposPage._simpleDiff('line1\nline2', 'line1\nline3');
+    T.assert('diff shows removed line', diff.includes('diff-del'));
+    T.assert('diff shows added line', diff.includes('diff-add'));
+
+    const noDiff = ReposPage._simpleDiff('same', 'same');
+    T.assert('no-change diff shows message', noDiff.includes('No visible changes'));
+});
+
 T.suite('Storage', () => {
     T.assert('Storage.init exists', typeof Storage.init === 'function');
     T.assert('Storage.get exists', typeof Storage.get === 'function');

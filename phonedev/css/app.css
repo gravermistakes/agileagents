@@ -561,6 +561,91 @@ input::placeholder, textarea::placeholder {
     margin-top: 12px;
 }
 
+/* --- Code Editor --- */
+.code-editor {
+    width: 100%;
+    min-height: 50vh;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 12px;
+    resize: vertical;
+    tab-size: 4;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: auto;
+}
+
+.code-editor:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+/* --- Symbol Bar --- */
+.symbol-bar {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 6px 0;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 4px;
+}
+
+.symbol-bar::-webkit-scrollbar { display: none; }
+
+.symbol-bar button {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'SF Mono', monospace;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: 40px;
+    min-height: 40px;
+    flex-shrink: 0;
+}
+
+.symbol-bar button:active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+}
+
+/* --- Diff View --- */
+.diff-view {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    font-family: 'SF Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    max-height: 40vh;
+    overflow: auto;
+}
+
+.diff-del {
+    background: rgba(248,81,73,0.15);
+    color: #ffa198;
+    padding: 1px 4px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.diff-add {
+    background: rgba(63,185,80,0.15);
+    color: #7ee787;
+    padding: 1px 4px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
 /* --- Status badges --- */
 .badge {
     display: inline-block;

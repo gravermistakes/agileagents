@@ -8,6 +8,8 @@ const ReposPage = {
     _allRepos: null,
     _treeItems: null,
     _hljsLoaded: false,
+    _editing: false,
+    _editContent: null,
 
     render() {
         const container = document.getElementById('page-container');
@@ -221,7 +223,8 @@ const ReposPage = {
                 </div>
                 <div class="file-actions">
                     <button class="btn btn-secondary" onclick="ReposPage.copyFileContent()" style="flex:1">Copy</button>
-                    <button class="btn btn-secondary" onclick="ReposPage.sendToAI()" style="flex:1">Send to AI</button>
+                    <button class="btn btn-secondary" onclick="ReposPage.startEdit()" style="flex:1">Edit</button>
+                    <button class="btn btn-secondary" onclick="ReposPage.sendToAI()" style="flex:1">Ask AI</button>
                 </div>
             </div>`;
 
@@ -301,6 +304,157 @@ const ReposPage = {
             ChatPage._pendingFileName = name;
             App.navigate('chat');
             UI.toast('File attached');
+        }
+    },
+
+    startEdit() {
+        if (!this._fileContent) return;
+        this._editing = true;
+        this._editContent = this._fileContent;
+        const name = this._currentPath.split('/').pop();
+        const container = document.getElementById('page-container');
+
+        container.innerHTML = `
+            <div class="page active" id="page-repos">
+                <div class="page-header">
+                    <button class="back-btn" onclick="ReposPage.cancelEdit()">Cancel</button>
+                    <h1 style="font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${UI.escapeHtml(name)}</h1>
+                </div>
+                <div class="symbol-bar" id="symbol-bar">
+                    <button onclick="ReposPage.insertSymbol('\\t')">Tab</button>
+                    <button onclick="ReposPage.insertSymbol('{}')">{ }</button>
+                    <button onclick="ReposPage.insertSymbol('()')">( )</button>
+                    <button onclick="ReposPage.insertSymbol('[]')">[ ]</button>
+                    <button onclick="ReposPage.insertSymbol('&quot;&quot')">" "</button>
+                    <button onclick="ReposPage.insertSymbol(&quot;''&quot;)">' '</button>
+                    <button onclick="ReposPage.insertSymbol(';')">;</button>
+                    <button onclick="ReposPage.insertSymbol(':')">=</button>
+                    <button onclick="ReposPage.insertSymbol('=&gt;')">=&gt;</button>
+                    <button onclick="ReposPage.insertSymbol('//')">//</button>
+                </div>
+                <textarea id="code-editor" class="code-editor" spellcheck="false" autocomplete="off" autocapitalize="off">${UI.escapeHtml(this._fileContent)}</textarea>
+                <div class="file-actions" style="margin-top:8px">
+                    <button class="btn" onclick="ReposPage.showCommitDialog()" style="flex:1">Commit</button>
+                </div>
+            </div>`;
+
+        const editor = document.getElementById('code-editor');
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                this.insertSymbol('    ');
+            }
+            if (e.key === 'Enter') {
+                const pos = editor.selectionStart;
+                const before = editor.value.substring(0, pos);
+                const currentLine = before.split('\n').pop();
+                const indent = currentLine.match(/^\s*/)[0];
+                if (indent) {
+                    e.preventDefault();
+                    this.insertSymbol('\n' + indent);
+                }
+            }
+        });
+        editor.addEventListener('input', () => {
+            this._editContent = editor.value;
+        });
+    },
+
+    insertSymbol(sym) {
+        const editor = document.getElementById('code-editor');
+        if (!editor) return;
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        const val = editor.value;
+        const pairs = { '{}': 1, '()': 1, '[]': 1, '""': 1, "''": 1 };
+
+        editor.value = val.substring(0, start) + sym + val.substring(end);
+        const cursorPos = pairs[sym] ? start + 1 : start + sym.length;
+        editor.selectionStart = editor.selectionEnd = cursorPos;
+        editor.focus();
+        this._editContent = editor.value;
+    },
+
+    cancelEdit() {
+        this._editing = false;
+        this._editContent = null;
+        this._view = 'file';
+        this.render();
+    },
+
+    showCommitDialog() {
+        if (this._editContent === this._fileContent) {
+            UI.toast('No changes to commit');
+            return;
+        }
+
+        const name = this._currentPath.split('/').pop();
+        const diff = this._simpleDiff(this._fileContent, this._editContent);
+
+        const container = document.getElementById('page-container');
+        container.innerHTML = `
+            <div class="page active" id="page-repos">
+                <div class="page-header">
+                    <button class="back-btn" onclick="ReposPage.startEdit()">← Back</button>
+                    <h1 style="font-size:16px">Commit Changes</h1>
+                </div>
+                <div class="card">
+                    <div class="card-header">Diff Preview</div>
+                    <div class="diff-view">${diff}</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Commit Message</div>
+                    <input id="commit-msg" type="text" placeholder="Update ${UI.escapeAttr(name)}" value="Update ${UI.escapeAttr(name)}">
+                </div>
+                <button class="btn" onclick="ReposPage.commitChanges()" id="commit-btn">Commit & Push</button>
+            </div>`;
+    },
+
+    _simpleDiff(oldText, newText) {
+        const oldLines = oldText.split('\n');
+        const newLines = newText.split('\n');
+        const maxLines = Math.max(oldLines.length, newLines.length);
+        let html = '';
+        for (let i = 0; i < maxLines; i++) {
+            const oldLine = oldLines[i];
+            const newLine = newLines[i];
+            if (oldLine === newLine) continue;
+            if (oldLine !== undefined && newLine === undefined) {
+                html += `<div class="diff-del">- ${UI.escapeHtml(oldLine)}</div>`;
+            } else if (oldLine === undefined && newLine !== undefined) {
+                html += `<div class="diff-add">+ ${UI.escapeHtml(newLine)}</div>`;
+            } else {
+                html += `<div class="diff-del">- ${UI.escapeHtml(oldLine)}</div>`;
+                html += `<div class="diff-add">+ ${UI.escapeHtml(newLine)}</div>`;
+            }
+        }
+        return html || '<div style="color:var(--text-muted);padding:8px">No visible changes</div>';
+    },
+
+    async commitChanges() {
+        const msgEl = document.getElementById('commit-msg');
+        const btn = document.getElementById('commit-btn');
+        const message = msgEl ? msgEl.value.trim() : '';
+        if (!message) { UI.toast('Enter a commit message'); return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Committing...';
+
+        try {
+            await GitHub.updateFile(
+                this._currentOwner, this._currentRepo,
+                this._currentPath, this._editContent, this._fileSha, message
+            );
+            this._fileContent = this._editContent;
+            this._editing = false;
+            this._editContent = null;
+            UI.toast('Committed!');
+            this._view = 'file';
+            this.render();
+        } catch (e) {
+            btn.disabled = false;
+            btn.textContent = 'Commit & Push';
+            UI.toast('Commit failed: ' + e.message);
         }
     },
 };
