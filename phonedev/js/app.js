@@ -11,6 +11,7 @@ const App = {
         }
         await GitHub.init();
         await AI.init();
+        await ProjectsPage.init();
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -44,6 +45,7 @@ const App = {
             case 'home': HomePage.render(); break;
             case 'repos': ReposPage.render(); break;
             case 'chat': ChatPage.render(); break;
+            case 'projects': ProjectsPage.render(); break;
             case 'settings': SettingsPage.render(); break;
         }
 

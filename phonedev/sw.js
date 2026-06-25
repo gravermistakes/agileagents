@@ -1,4 +1,4 @@
-const CACHE_NAME = 'phonedev-v6';
+const CACHE_NAME = 'phonedev-v7';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
     './pages/home.js',
     './pages/repos.js',
     './pages/chat.js',
+    './pages/projects.js',
     './pages/settings.js',
     './icons/icon.svg',
     './icons/icon-192.png',

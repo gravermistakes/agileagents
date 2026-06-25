@@ -58,6 +58,24 @@ T.suite('ReposPage editor', () => {
     T.assert('no-change diff shows message', noDiff.includes('No visible changes'));
 });
 
+T.suite('ProjectsPage', () => {
+    T.assert('ProjectsPage exists', typeof ProjectsPage === 'object');
+    T.assert('render is a function', typeof ProjectsPage.render === 'function');
+    T.assert('init is a function', typeof ProjectsPage.init === 'function');
+    T.assert('addProject is a function', typeof ProjectsPage.addProject === 'function');
+    T.assert('addTask is a function', typeof ProjectsPage.addTask === 'function');
+    T.assert('moveTask is a function', typeof ProjectsPage.moveTask === 'function');
+    T.assert('deleteTask is a function', typeof ProjectsPage.deleteTask === 'function');
+    T.assert('deleteProject is a function', typeof ProjectsPage.deleteProject === 'function');
+    T.assert('has COLUMNS', ProjectsPage.COLUMNS.length === 3);
+    T.eq('first column is todo', ProjectsPage.COLUMNS[0], 'todo');
+    T.eq('second column is doing', ProjectsPage.COLUMNS[1], 'doing');
+    T.eq('third column is done', ProjectsPage.COLUMNS[2], 'done');
+    T.assert('has COLUMN_LABELS', !!ProjectsPage.COLUMN_LABELS.todo);
+    T.eq('initial view', ProjectsPage._view, 'list');
+    T.assert('_projects is array', Array.isArray(ProjectsPage._projects));
+});
+
 T.suite('Storage', () => {
     T.assert('Storage.init exists', typeof Storage.init === 'function');
     T.assert('Storage.get exists', typeof Storage.get === 'function');
