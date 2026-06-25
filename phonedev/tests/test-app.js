@@ -30,6 +30,16 @@ T.suite('ReposPage state', () => {
     T.eq('initial view', ReposPage._view, 'list');
     T.eq('initial path', ReposPage._currentPath, '');
     T.eq('initial owner', ReposPage._currentOwner, null);
+    T.assert('filterRepos is a function', typeof ReposPage.filterRepos === 'function');
+    T.assert('filterTree is a function', typeof ReposPage.filterTree === 'function');
+    T.assert('_getLang is a function', typeof ReposPage._getLang === 'function');
+    T.eq('detects javascript', ReposPage._getLang('app.js'), 'javascript');
+    T.eq('detects python', ReposPage._getLang('main.py'), 'python');
+    T.eq('detects typescript', ReposPage._getLang('index.ts'), 'typescript');
+    T.eq('returns null for unknown', ReposPage._getLang('readme.xyz'), null);
+    T.eq('detects rust', ReposPage._getLang('lib.rs'), 'rust');
+    T.eq('detects css', ReposPage._getLang('style.css'), 'css');
+    T.eq('detects json', ReposPage._getLang('package.json'), 'json');
 });
 
 T.suite('Storage', () => {

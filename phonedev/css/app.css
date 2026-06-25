@@ -492,6 +492,75 @@ input::placeholder, textarea::placeholder {
     overflow-y: auto;
 }
 
+.code-viewer {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.code-viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+}
+
+.code-viewer-header .text-muted { color: var(--text-muted); }
+
+.code-viewer-body {
+    display: flex;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: 65vh;
+    background: var(--bg-tertiary);
+}
+
+.code-viewer-body .line-numbers {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 0;
+    text-align: right;
+    user-select: none;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    border-right: 1px solid var(--border);
+    min-width: 40px;
+}
+
+.code-viewer-body .line-numbers span {
+    padding: 0 8px;
+}
+
+.code-viewer-body pre {
+    margin: 0;
+    padding: 12px;
+    flex: 1;
+    overflow-x: auto;
+    background: transparent;
+    border: none;
+}
+
+.code-viewer-body pre code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre;
+    background: none;
+    padding: 0;
+}
+
+.file-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
 /* --- Status badges --- */
 .badge {
     display: inline-block;
