@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhoneDev Tests</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: #0d1117; color: #e6edf3; padding: 16px; }
+        h1 { font-size: 20px; margin-bottom: 16px; }
+        h2 { font-size: 18px; margin-bottom: 12px; }
+        .failures { margin-top: 12px; }
+        .fail { background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); border-radius: 8px; padding: 10px; margin-bottom: 8px; font-size: 14px; }
+        .fail strong { color: #f85149; }
+        #test-results { min-height: 60px; }
+    </style>
+</head>
+<body>
+    <h1>PhoneDev Tests</h1>
+    <div id="test-results"><span style="color:#8b949e">Running...</span></div>
+    <div id="toast" class="toast hidden" style="display:none"></div>
+    <div id="app" style="display:none">
+        <nav id="nav"></nav>
+        <main id="page-container"></main>
+    </div>
+
+    <script src="../js/storage.js"></script>
+    <script src="../js/github.js"></script>
+    <script src="../js/ai.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../pages/home.js"></script>
+    <script src="../pages/repos.js"></script>
+    <script src="../pages/chat.js"></script>
+    <script src="../pages/settings.js"></script>
+    <script src="../js/app.js"></script>
+
+    <script src="runner.js"></script>
+    <script src="test-ui.js"></script>
+    <script src="test-ai.js"></script>
+    <script src="test-github.js"></script>
+    <script src="test-app.js"></script>
+    <script>
+        document.getElementById('toast').style.display = '';
+        T.report();
+    </script>
+</body>
+</html>
