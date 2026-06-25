@@ -1,0 +1,22 @@
+{
+    "langrev": "1",
+    "warnings": ["all"],
+    "dependency-search-paths": ["lib"],
+    "dependencies": [],
+    "authors": ["gravermistakes"],
+    "version": "0.1.0",
+    "sources": ["src/**"],
+    "targets": {
+        "c3-json-extras": {
+            "type": "library"
+        },
+        "test": {
+            "type": "executable",
+            "sources": ["test/**"]
+        },
+        "bench": {
+            "type": "executable",
+            "sources": ["bench/**"]
+        }
+    }
+}

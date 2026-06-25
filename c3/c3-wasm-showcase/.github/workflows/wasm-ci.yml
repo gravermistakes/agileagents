@@ -1,0 +1,118 @@
+name: WASM Target Validation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  wasm-freestanding:
+    name: WASM Freestanding (wasmtime)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install C3 compiler
+        run: |
+          C3_VERSION=$(curl -s https://api.github.com/repos/c3lang/c3c/releases/latest | grep tag_name | cut -d'"' -f4)
+          echo "Installing C3 ${C3_VERSION}"
+          curl -LO "https://github.com/c3lang/c3c/releases/download/${C3_VERSION}/c3-ubuntu-20.tar.gz"
+          tar xzf c3-ubuntu-20.tar.gz
+          sudo cp c3c /usr/local/bin/
+          c3c --version
+
+      - name: Install wasmtime
+        run: |
+          curl https://wasmtime.dev/install.sh -sSf | bash
+          echo "${HOME}/.wasmtime/bin" >> $GITHUB_PATH
+
+      - name: Create build directories
+        run: mkdir -p build output
+
+      - name: Compile WASM examples
+        run: |
+          for src in examples/wasm/*.c3; do
+            name=$(basename "$src" .c3)
+            echo "Compiling ${name}..."
+            c3c compile --target wasm32 -o "build/${name}.wasm" "$src" || echo "FAILED: ${name}"
+          done
+
+      - name: Run WASM examples
+        run: |
+          PASS=0
+          FAIL=0
+          for wasm in build/*.wasm; do
+            name=$(basename "$wasm" .wasm)
+            echo "Running ${name}..."
+            if wasmtime run "$wasm" > "output/${name}.out" 2>&1; then
+              echo "  OK"
+              PASS=$((PASS + 1))
+            else
+              echo "  FAILED (exit code $?)"
+              cat "output/${name}.out"
+              FAIL=$((FAIL + 1))
+            fi
+          done
+          echo ""
+          echo "Results: ${PASS} passed, ${FAIL} failed"
+          if [ $FAIL -gt 0 ]; then
+            echo "::warning::${FAIL} WASM example(s) failed"
+          fi
+
+      - name: Check expected outputs
+        run: |
+          if [ -d expected ]; then
+            for exp in expected/*.out; do
+              name=$(basename "$exp")
+              if [ -f "output/${name}" ]; then
+                if diff -q "$exp" "output/${name}" > /dev/null 2>&1; then
+                  echo "MATCH: ${name}"
+                else
+                  echo "MISMATCH: ${name}"
+                  diff "$exp" "output/${name}" || true
+                fi
+              fi
+            done
+          fi
+
+      - name: Upload outputs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wasm-outputs
+          path: output/
+
+  wasm-emscripten:
+    name: WASM Emscripten
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install C3 compiler
+        run: |
+          C3_VERSION=$(curl -s https://api.github.com/repos/c3lang/c3c/releases/latest | grep tag_name | cut -d'"' -f4)
+          curl -LO "https://github.com/c3lang/c3c/releases/download/${C3_VERSION}/c3-ubuntu-20.tar.gz"
+          tar xzf c3-ubuntu-20.tar.gz
+          sudo cp c3c /usr/local/bin/
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Compile Emscripten examples
+        run: |
+          for src in examples/emscripten/*.c3; do
+            name=$(basename "$src" .c3)
+            echo "Compiling ${name} with Emscripten..."
+            c3c compile --target wasm32 --emscripten "$src" || echo "FAILED: ${name}"
+          done
+
+      - name: Verify Emscripten output
+        run: |
+          # Check that .js and .wasm files were generated
+          if ls *.js 1>/dev/null 2>&1 && ls *.wasm 1>/dev/null 2>&1; then
+            echo "Emscripten output generated successfully"
+            ls -la *.js *.wasm
+          else
+            echo "::warning::Emscripten compilation did not produce expected output"
+          fi

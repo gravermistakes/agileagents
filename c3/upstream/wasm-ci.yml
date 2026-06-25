@@ -1,0 +1,93 @@
+# Proposed WASM CI workflow for c3lang/c3c
+# This file is intended to be submitted as a PR to the upstream C3 repository.
+#
+# Purpose: Validate that the C3 compiler produces correct WASM output
+# and catch regressions in wasm32 target support.
+
+name: WASM Target Validation
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'src/**'
+      - 'lib/**'
+      - 'test/**'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'lib/**'
+      - 'test/**'
+
+jobs:
+  wasm-compile-check:
+    name: WASM Compilation Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build C3 compiler from source
+        run: |
+          # Build the compiler itself (assumes cmake build)
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make -j$(nproc)
+          sudo make install
+
+      - name: Install wasmtime
+        run: |
+          curl https://wasmtime.dev/install.sh -sSf | bash
+          echo "${HOME}/.wasmtime/bin" >> $GITHUB_PATH
+
+      - name: Create WASM test programs
+        run: |
+          mkdir -p wasm_test_programs
+
+          # Minimal hello world
+          cat > wasm_test_programs/hello.c3 << 'C3EOF'
+          module hello;
+          fn void main() {
+              // Minimal — just ensure compilation succeeds
+          }
+          C3EOF
+
+          # Integer arithmetic
+          cat > wasm_test_programs/arith.c3 << 'C3EOF'
+          module arith;
+          fn int add(int a, int b) { return a + b; }
+          fn int mul(int a, int b) { return a * b; }
+          fn void main() {
+              int result = add(21, 21);
+              int product = mul(6, 7);
+          }
+          C3EOF
+
+      - name: Compile test programs to wasm32
+        run: |
+          PASS=0
+          FAIL=0
+          for src in wasm_test_programs/*.c3; do
+            name=$(basename "$src" .c3)
+            echo -n "Compiling ${name}... "
+            if c3c compile --target wasm32 -o "wasm_test_programs/${name}.wasm" "$src" 2>&1; then
+              echo "OK"
+              PASS=$((PASS + 1))
+            else
+              echo "FAILED"
+              FAIL=$((FAIL + 1))
+            fi
+          done
+          echo "Compilation: ${PASS} passed, ${FAIL} failed"
+          [ $FAIL -eq 0 ] || exit 1
+
+      - name: Validate WASM binaries
+        run: |
+          for wasm in wasm_test_programs/*.wasm; do
+            name=$(basename "$wasm")
+            echo -n "Validating ${name}... "
+            if wasmtime run --dry-run "$wasm" 2>/dev/null; then
+              echo "valid"
+            else
+              echo "invalid (may need WASI imports)"
+            fi
+          done

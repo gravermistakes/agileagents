@@ -1,0 +1,23 @@
+{
+    "langrev": "1",
+    "warnings": ["all"],
+    "dependency-search-paths": [],
+    "dependencies": [],
+    "authors": ["gravermistakes"],
+    "version": "0.1.0",
+    "sources": ["examples/**"],
+    "targets": {
+        "hello-wasm": {
+            "type": "executable",
+            "sources": ["examples/wasm/hello.c3"]
+        },
+        "json-parse-wasm": {
+            "type": "executable",
+            "sources": ["examples/wasm/json_parse.c3"]
+        },
+        "json-stream-wasm": {
+            "type": "executable",
+            "sources": ["examples/wasm/json_stream.c3"]
+        }
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "users": [
+        {"id": 1, "name": "alice", "email": "alice@example.com", "age": 30, "roles": ["admin", "user"], "active": true},
+        {"id": 2, "name": "bob", "email": "bob@example.com", "age": 25, "roles": ["user"], "active": true},
+        {"id": 3, "name": "carol", "email": "carol@example.com", "age": 35, "roles": ["user", "editor"], "active": false},
+        {"id": 4, "name": "dave", "email": "dave@example.com", "age": 28, "roles": ["viewer"], "active": true},
+        {"id": 5, "name": "eve", "email": "eve@example.com", "age": 42, "roles": ["admin"], "active": true}
+    ],
+    "pagination": {
+        "page": 1,
+        "per_page": 20,
+        "total": 5,
+        "total_pages": 1
+    },
+    "metadata": {
+        "generated_at": "2026-06-18T00:00:00Z",
+        "version": "1.0.0",
+        "source": "benchmark"
+    }
+}
