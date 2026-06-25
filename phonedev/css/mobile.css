@@ -1,0 +1,63 @@
+@media (max-width: 480px) {
+    #page-container {
+        padding: 12px;
+    }
+
+    .page-header h1 {
+        font-size: 20px;
+    }
+
+    .card {
+        padding: 14px;
+        margin-bottom: 10px;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .nav-btn {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .list-item,
+    .file-item {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    input, textarea, select {
+        font-size: 16px;
+    }
+
+    .btn {
+        min-height: 48px;
+    }
+
+    .file-item {
+        min-height: 48px;
+    }
+
+    .list-item {
+        min-height: 52px;
+    }
+}
+
+@media (display-mode: standalone) {
+    body {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #ffffff;
+        --bg-secondary: #f6f8fa;
+        --bg-tertiary: #eaeef2;
+        --border: #d0d7de;
+        --text: #1f2328;
+        --text-muted: #656d76;
+        --accent: #0969da;
+        --accent-dim: #0550ae;
+        --green: #1a7f37;
+        --red: #cf222e;
+        --orange: #9a6700;
+    }
+}

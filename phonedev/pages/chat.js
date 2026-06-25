@@ -1,6 +1,24 @@
 const ChatPage = {
     _pendingContext: '',
+    _pendingFileName: '',
     _streaming: false,
+    _systemPrompt: 'default',
+
+    MODES: [
+        { key: 'default', label: 'Code' },
+        { key: 'review', label: 'Review' },
+        { key: 'explain', label: 'Explain' },
+        { key: 'debug', label: 'Debug' },
+    ],
+
+    QUICK_PROMPTS: [
+        'Explain this error',
+        'Review my code',
+        'How do I...',
+        'Refactor this',
+        'Write tests for',
+        'Debug this',
+    ],
 
     render() {
         const container = document.getElementById('page-container');
@@ -10,8 +28,8 @@ const ChatPage = {
                 <div class="page active" id="page-chat">
                     <div class="empty-state">
                         <div class="emoji">🤖</div>
-                        <p>Add your Groq API key in Settings</p>
-                        <p style="font-size:13px;color:var(--text-muted)">Free at console.groq.com</p>
+                        <p>Add an AI API key in Settings</p>
+                        <p style="font-size:13px;color:var(--text-muted)">Groq, Gemini, OpenRouter, Mistral — all free tiers</p>
                         <button class="btn" onclick="App.navigate('settings')">Open Settings</button>
                     </div>
                 </div>`;
@@ -23,19 +41,24 @@ const ChatPage = {
         container.innerHTML = `
             <div class="page active" id="page-chat">
                 <div class="chat-container">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                        <div style="font-size:12px;color:var(--text-muted)">${model.name} · ${model.ctx}</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                        <div style="font-size:12px;color:var(--text-muted)">${UI.escapeHtml(AI.PROVIDERS[AI._provider].name)} · ${UI.escapeHtml(model.name)} · ${model.ctx}</div>
                         <button style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:4px 8px"
                                 onclick="ChatPage.clearChat()">Clear</button>
+                    </div>
+                    <div class="chat-modes">
+                        ${this.MODES.map(m =>
+                            `<button class="chat-mode-pill ${m.key === this._systemPrompt ? 'active' : ''}"
+                                     onclick="ChatPage.setMode('${m.key}')">${m.label}</button>`
+                        ).join('')}
                     </div>
                     <div class="chat-messages" id="chat-messages">
                         ${this.renderMessages()}
                     </div>
                     ${this._pendingContext ? `
-                        <div style="font-size:12px;color:var(--accent);padding:4px 0;display:flex;align-items:center;gap:6px">
-                            📎 File attached
-                            <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px"
-                                    onclick="ChatPage._pendingContext='';ChatPage.render()">✕</button>
+                        <div class="file-context-tag">
+                            📎 ${UI.escapeHtml(this._pendingFileName || 'File')}
+                            <button onclick="ChatPage._pendingContext='';ChatPage._pendingFileName='';ChatPage.render()">✕</button>
                         </div>
                     ` : ''}
                     <div class="chat-input-area">
@@ -60,7 +83,12 @@ const ChatPage = {
                 <div class="empty-state" style="padding:24px 0">
                     <div class="emoji">💬</div>
                     <p>Start a conversation</p>
-                    <p style="font-size:13px;color:var(--text-muted)">Powered by Groq (free tier)</p>
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Powered by ${UI.escapeHtml(AI.PROVIDERS[AI._provider].name)}</p>
+                    <div class="quick-prompts">
+                        ${this.QUICK_PROMPTS.map(p =>
+                            `<button class="quick-prompt-chip" onclick="ChatPage.useQuickPrompt('${UI.escapeAttr(p)}')">${UI.escapeHtml(p)}</button>`
+                        ).join('')}
+                    </div>
                 </div>`;
         }
 
@@ -72,8 +100,23 @@ const ChatPage = {
         `).join('');
     },
 
+    setMode(mode) {
+        this._systemPrompt = mode;
+        document.querySelectorAll('.chat-mode-pill').forEach(el => {
+            el.classList.toggle('active', el.textContent.trim() === this.MODES.find(m => m.key === mode)?.label);
+        });
+        UI.toast('Mode: ' + this.MODES.find(m => m.key === mode)?.label);
+    },
+
+    useQuickPrompt(text) {
+        const input = document.getElementById('chat-input');
+        if (input) {
+            input.value = text;
+            input.focus();
+        }
+    },
+
     handleKey(e) {
-        // Enter sends (without shift)
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             this.send();
@@ -88,10 +131,10 @@ const ChatPage = {
         let text = input.value.trim();
         if (!text) return;
 
-        // Prepend file context if attached
         if (this._pendingContext) {
             text = this._pendingContext + text;
             this._pendingContext = '';
+            this._pendingFileName = '';
         }
 
         input.value = '';
@@ -99,7 +142,6 @@ const ChatPage = {
         sendBtn.disabled = true;
         this._streaming = true;
 
-        // Add user message immediately
         const messages = document.getElementById('chat-messages');
         messages.innerHTML += `
             <div class="chat-msg user">
@@ -119,14 +161,13 @@ const ChatPage = {
                     el.querySelector('.content').innerHTML = UI.renderMarkdown(full);
                     this.scrollToBottom();
                 }
-            });
+            }, this._systemPrompt);
         } catch (e) {
             const el = document.getElementById('streaming-msg');
             if (el) {
                 el.querySelector('.content').innerHTML =
                     `<span style="color:var(--red)">${UI.escapeHtml(e.message)}</span>`;
             }
-            // Remove failed messages from AI history
             if (AI._messages.length > 0 && AI._messages[AI._messages.length - 1].role === 'user') {
                 AI._messages.pop();
             }
@@ -142,8 +183,10 @@ const ChatPage = {
         if (el) el.scrollTop = el.scrollHeight;
     },
 
-    clearChat() {
-        AI.clearHistory();
+    async clearChat() {
+        if (AI._messages.length === 0) return;
+        if (!confirm('Clear chat history?')) return;
+        await AI.clearHistory();
         this.render();
         UI.toast('Chat cleared');
     },

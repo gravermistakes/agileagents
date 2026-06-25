@@ -2,23 +2,26 @@ const App = {
     currentPage: 'home',
 
     async init() {
-        await Storage.init();
+        try {
+            await Storage.init();
+        } catch (e) {
+            document.getElementById('page-container').innerHTML =
+                '<div class="empty-state"><p>Storage unavailable. Try disabling private browsing or clearing site data.</p></div>';
+            return;
+        }
         await GitHub.init();
         await AI.init();
 
-        // Register service worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/phonedev/sw.js').catch(() => {});
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
         }
 
-        // Nav button handlers
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.navigate(btn.dataset.page);
             });
         });
 
-        // Handle back button
         window.addEventListener('popstate', (e) => {
             if (e.state && e.state.page) {
                 this.navigate(e.state.page, false);

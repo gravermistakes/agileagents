@@ -3,6 +3,7 @@ const SettingsPage = {
         const container = document.getElementById('page-container');
         const ghConnected = GitHub.isConnected();
         const aiConnected = AI.isConnected();
+        const provider = AI.PROVIDERS[AI._provider];
 
         container.innerHTML = `
             <div class="page active" id="page-settings">
@@ -29,31 +30,40 @@ const SettingsPage = {
                 </div>
 
                 <div class="card">
-                    <div class="card-header">Groq AI</div>
+                    <div class="card-header">AI Provider</div>
+                    <div class="key-input-group">
+                        <label>Provider</label>
+                        <select id="provider-select" onchange="SettingsPage.changeProvider(this.value)"
+                                style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:12px;font-size:16px">
+                            ${Object.entries(AI.PROVIDERS).map(([key, p]) => `
+                                <option value="${key}" ${key === AI._provider ? 'selected' : ''}>
+                                    ${p.name} (${p.limits})
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
                     ${aiConnected ? `
                         <div style="margin-bottom:12px">
                             <span class="badge connected">Connected</span>
                             <span style="color:var(--text-muted);font-size:13px;margin-left:8px">${AI.getModel().name}</span>
                         </div>
-                        <div class="key-input-group">
-                            <label>Model</label>
-                            <select id="model-select" onchange="SettingsPage.changeModel(this.value)"
-                                    style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:12px;font-size:16px">
-                                ${AI.MODELS.map(m => `
-                                    <option value="${m.id}" ${m.id === AI._model ? 'selected' : ''}>
-                                        ${m.name} (${m.ctx})
-                                    </option>
-                                `).join('')}
-                            </select>
-                        </div>
-                        <button class="btn btn-danger" onclick="SettingsPage.disconnectAI()">Disconnect Groq</button>
+                        ${this._renderModelSelect()}
+                        <button class="btn btn-danger" onclick="SettingsPage.disconnectAI()" style="margin-top:8px">Disconnect ${provider.name}</button>
                     ` : `
+                        ${AI._provider === 'custom' ? `
+                            <div class="key-input-group">
+                                <label>Base URL (OpenAI-compatible)</label>
+                                <input type="url" id="custom-url-input" placeholder="https://api.example.com/v1"
+                                       value="${AI.PROVIDERS.custom.baseUrl || ''}"
+                                       autocomplete="off" spellcheck="false">
+                            </div>
+                        ` : ''}
                         <div class="key-input-group">
                             <label>API Key</label>
-                            <input type="password" id="groq-key-input" placeholder="gsk_xxxxx..."
+                            <input type="password" id="ai-key-input" placeholder="${this._keyPlaceholder()}"
                                    autocomplete="off" spellcheck="false">
                             <div class="key-status" style="color:var(--text-muted);font-size:12px;margin-top:8px">
-                                Free at console.groq.com → API Keys
+                                ${this._keyHint()}
                             </div>
                         </div>
                         <button class="btn" onclick="SettingsPage.connectAI()">Connect</button>
@@ -61,13 +71,18 @@ const SettingsPage = {
                 </div>
 
                 <div class="card">
+                    <div class="card-header">Chat</div>
+                    <button class="btn btn-secondary" onclick="SettingsPage.clearChat()">Clear Chat History</button>
+                </div>
+
+                <div class="card">
                     <div class="card-header">About</div>
                     <p style="color:var(--text-muted);font-size:13px">
-                        PhoneDev v0.1.0<br>
+                        PhoneDev v0.2.0<br>
                         Mobile-first developer workspace<br>
                         Built for phone-only developers<br><br>
                         All data stored locally on your device.<br>
-                        API keys encrypted in IndexedDB.
+                        API keys stored locally in IndexedDB.
                     </p>
                 </div>
 
@@ -79,6 +94,39 @@ const SettingsPage = {
             </div>`;
 
         if (ghConnected) this.loadGitHubUser();
+    },
+
+    _renderModelSelect() {
+        const models = AI.getProviderModels();
+        if (!models.length) return '';
+        return `
+            <div class="key-input-group">
+                <label>Model</label>
+                <select id="model-select" onchange="SettingsPage.changeModel(this.value)"
+                        style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:12px;font-size:16px">
+                    ${models.map(m => `
+                        <option value="${m.id}" ${m.id === AI._model ? 'selected' : ''}>
+                            ${m.name} (${m.ctx})
+                        </option>
+                    `).join('')}
+                </select>
+            </div>`;
+    },
+
+    _keyPlaceholder() {
+        const hints = { groq: 'gsk_xxxxx...', openrouter: 'sk-or-...', mistral: 'xxx...', gemini: 'AIza...', custom: 'sk-...' };
+        return hints[AI._provider] || 'API key...';
+    },
+
+    _keyHint() {
+        const hints = {
+            groq: 'Free at console.groq.com → API Keys',
+            openrouter: 'Free at openrouter.ai → Keys',
+            mistral: 'Free at console.mistral.ai → API Keys',
+            gemini: 'Free at aistudio.google.com → API keys',
+            custom: 'Enter your provider\'s API key',
+        };
+        return hints[AI._provider] || '';
     },
 
     async loadGitHubUser() {
@@ -121,26 +169,49 @@ const SettingsPage = {
         this.render();
     },
 
+    async changeProvider(providerId) {
+        await AI.setProvider(providerId);
+        this.render();
+    },
+
     async connectAI() {
-        const input = document.getElementById('groq-key-input');
+        const input = document.getElementById('ai-key-input');
         const key = input.value.trim();
         if (!key) { UI.toast('Enter a key'); return; }
 
+        if (AI._provider === 'custom') {
+            const urlInput = document.getElementById('custom-url-input');
+            const baseUrl = urlInput ? urlInput.value.trim() : '';
+            if (!baseUrl) { UI.toast('Enter a base URL'); return; }
+            await AI.setCustomBaseUrl(baseUrl);
+        }
+
         try {
             await AI.setKey(key);
-            // Test with a quick request
-            UI.toast('Groq connected!');
+            const provider = AI.PROVIDERS[AI._provider];
+
+            if (provider.isGemini) {
+                const res = await fetch(`${provider.baseUrl}/models?key=${key}`);
+                if (!res.ok) throw new Error(`${res.status}`);
+            } else if (provider.validatePath) {
+                const base = provider.baseUrl || AI.PROVIDERS.custom.baseUrl;
+                const res = await fetch(base + provider.validatePath, {
+                    headers: { 'Authorization': `Bearer ${key}` },
+                });
+                if (!res.ok) throw new Error(`${res.status}`);
+            }
+
+            UI.toast(`${provider.name} connected!`);
             this.render();
         } catch (e) {
             await AI.clearKey();
-            UI.toast('Error: ' + e.message);
+            UI.toast('Invalid key: ' + e.message);
         }
     },
 
     async disconnectAI() {
         await AI.clearKey();
-        AI.clearHistory();
-        UI.toast('Groq disconnected');
+        UI.toast('Disconnected');
         this.render();
     },
 
@@ -149,9 +220,18 @@ const SettingsPage = {
         UI.toast('Model: ' + AI.getModel().name);
     },
 
+    async clearChat() {
+        if (confirm('Clear all chat history?')) {
+            await AI.clearHistory();
+            UI.toast('Chat history cleared');
+        }
+    },
+
     exportData() {
         const data = {
             chatHistory: AI._messages,
+            provider: AI._provider,
+            model: AI._model,
             exportedAt: new Date().toISOString(),
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -168,7 +248,7 @@ const SettingsPage = {
         if (confirm('Delete all data? This cannot be undone.')) {
             await GitHub.clearToken();
             await AI.clearKey();
-            AI.clearHistory();
+            await AI.clearHistory();
             indexedDB.deleteDatabase('phonedev');
             UI.toast('All data cleared');
             location.reload();

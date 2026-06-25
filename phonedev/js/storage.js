@@ -49,7 +49,8 @@ const Storage = {
 
     async getJSON(key) {
         const val = await this.get(key);
-        return val ? JSON.parse(val) : null;
+        if (!val) return null;
+        try { return JSON.parse(val); } catch { return null; }
     },
 
     async setJSON(key, obj) {

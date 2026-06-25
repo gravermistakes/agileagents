@@ -1,17 +1,22 @@
-const CACHE_NAME = 'phonedev-v1';
+const CACHE_NAME = 'phonedev-v6';
 const STATIC_ASSETS = [
-    '/phonedev/',
-    '/phonedev/index.html',
-    '/phonedev/css/app.css',
-    '/phonedev/js/storage.js',
-    '/phonedev/js/github.js',
-    '/phonedev/js/ai.js',
-    '/phonedev/js/ui.js',
-    '/phonedev/js/app.js',
-    '/phonedev/pages/home.js',
-    '/phonedev/pages/repos.js',
-    '/phonedev/pages/chat.js',
-    '/phonedev/pages/settings.js',
+    './',
+    './index.html',
+    './manifest.json',
+    './css/app.css',
+    './css/mobile.css',
+    './js/storage.js',
+    './js/github.js',
+    './js/ai.js',
+    './js/ui.js',
+    './js/app.js',
+    './pages/home.js',
+    './pages/repos.js',
+    './pages/chat.js',
+    './pages/settings.js',
+    './icons/icon.svg',
+    './icons/icon-192.png',
+    './icons/icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {

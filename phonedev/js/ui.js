@@ -30,21 +30,33 @@ const UI = {
         return div.innerHTML;
     },
 
+    escapeAttr(str) {
+        return String(str).replace(/[&'"\\]/g, c => ({
+            '&': '&amp;', "'": '&#39;', '"': '&quot;', '\\': '\\\\'
+        })[c]);
+    },
+
+    _codeBlockId: 0,
+
     renderMarkdown(text) {
         let html = this.escapeHtml(text);
-        // Code blocks
         html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-            return `<pre><code>${code.trim()}</code></pre>`;
+            const id = 'cb-' + (++this._codeBlockId);
+            return `<div class="code-block-wrap"><button class="copy-code-btn" onclick="UI.copyCode('${id}')">Copy</button><pre id="${id}"><code>${code.trim()}</code></pre></div>`;
         });
-        // Inline code
         html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-        // Bold
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        // Italic
         html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-        // Line breaks
         html = html.replace(/\n/g, '<br>');
         return html;
+    },
+
+    copyCode(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        navigator.clipboard.writeText(el.textContent)
+            .then(() => this.toast('Copied!'))
+            .catch(() => this.toast('Copy failed'));
     },
 
     fileIcon(name, isDir) {
