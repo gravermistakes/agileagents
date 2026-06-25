@@ -17,7 +17,7 @@ const HomePage = {
                             GitHub ${ghConnected ? 'Connected' : 'Not Set'}
                         </span>
                         <span class="badge ${aiConnected ? 'connected' : 'disconnected'}">
-                            Groq ${aiConnected ? 'Connected' : 'Not Set'}
+                            ${UI.escapeHtml(AI.PROVIDERS[AI._provider].name)} ${aiConnected ? 'Connected' : 'Not Set'}
                         </span>
                     </div>
                     ${(!ghConnected || !aiConnected) ? `

@@ -28,8 +28,8 @@ const ChatPage = {
                 <div class="page active" id="page-chat">
                     <div class="empty-state">
                         <div class="emoji">🤖</div>
-                        <p>Add your Groq API key in Settings</p>
-                        <p style="font-size:13px;color:var(--text-muted)">Free at console.groq.com</p>
+                        <p>Add an AI API key in Settings</p>
+                        <p style="font-size:13px;color:var(--text-muted)">Groq, Gemini, OpenRouter, Mistral — all free tiers</p>
                         <button class="btn" onclick="App.navigate('settings')">Open Settings</button>
                     </div>
                 </div>`;
@@ -42,7 +42,7 @@ const ChatPage = {
             <div class="page active" id="page-chat">
                 <div class="chat-container">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-                        <div style="font-size:12px;color:var(--text-muted)">${UI.escapeHtml(model.name)} · ${model.ctx}</div>
+                        <div style="font-size:12px;color:var(--text-muted)">${UI.escapeHtml(AI.PROVIDERS[AI._provider].name)} · ${UI.escapeHtml(model.name)} · ${model.ctx}</div>
                         <button style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:4px 8px"
                                 onclick="ChatPage.clearChat()">Clear</button>
                     </div>
@@ -83,7 +83,7 @@ const ChatPage = {
                 <div class="empty-state" style="padding:24px 0">
                     <div class="emoji">💬</div>
                     <p>Start a conversation</p>
-                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Powered by Groq (free tier)</p>
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Powered by ${UI.escapeHtml(AI.PROVIDERS[AI._provider].name)}</p>
                     <div class="quick-prompts">
                         ${this.QUICK_PROMPTS.map(p =>
                             `<button class="quick-prompt-chip" onclick="ChatPage.useQuickPrompt('${UI.escapeAttr(p)}')">${UI.escapeHtml(p)}</button>`
