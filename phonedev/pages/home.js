@@ -49,14 +49,44 @@ const HomePage = {
                     <button class="btn btn-secondary" onclick="App.navigate('chat')" style="margin-bottom:8px">
                         💬 Ask AI
                     </button>
-                    <button class="btn btn-secondary" onclick="App.navigate('repos')">
+                    <button class="btn btn-secondary" onclick="App.navigate('repos')" style="margin-bottom:8px">
                         📁 Browse Repos
                     </button>
+                    <button class="btn btn-secondary" onclick="App.navigate('projects')">
+                        📋 Task Board
+                    </button>
                 </div>
+
+                ${ProjectsPage._projects.length ? `
+                    <div class="card">
+                        <div class="card-header">Active Tasks</div>
+                        <div id="home-tasks-list">
+                            ${this._renderActiveTasks()}
+                        </div>
+                    </div>
+                ` : ''}
             </div>
         `;
 
         if (ghConnected) this.loadRecentRepos();
+    },
+
+    _renderActiveTasks() {
+        const doing = [];
+        ProjectsPage._projects.forEach((p, pi) => {
+            p.tasks.forEach((t, ti) => {
+                if (t.status === 'doing') doing.push({ project: p.name, text: t.text, pi, ti });
+            });
+        });
+        if (!doing.length) return '<p style="color:var(--text-muted);font-size:13px;padding:4px 0">No tasks in progress</p>';
+        return doing.slice(0, 5).map(t => `
+            <div class="list-item" onclick="ProjectsPage.openProject(${t.pi}); App.navigate('projects')">
+                <div>
+                    <div class="title">${UI.escapeHtml(t.text)}</div>
+                    <div class="subtitle">${UI.escapeHtml(t.project)}</div>
+                </div>
+            </div>
+        `).join('');
     },
 
     async loadRecentRepos() {
