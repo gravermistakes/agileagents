@@ -1,7 +1,8 @@
-const CACHE_NAME = 'phonedev-v3';
+const CACHE_NAME = 'phonedev-v4';
 const STATIC_ASSETS = [
     './',
     './index.html',
+    './manifest.json',
     './css/app.css',
     './css/mobile.css',
     './js/storage.js',
@@ -13,6 +14,9 @@ const STATIC_ASSETS = [
     './pages/repos.js',
     './pages/chat.js',
     './pages/settings.js',
+    './icons/icon.svg',
+    './icons/icon-192.png',
+    './icons/icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {
