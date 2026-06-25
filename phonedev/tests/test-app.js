@@ -1,6 +1,11 @@
 T.suite('App.navigate', () => {
     T.assert('navigate is a function', typeof App.navigate === 'function');
     T.assert('currentPage starts as home or set', typeof App.currentPage === 'string');
+    T.assert('_initSwipe is a function', typeof App._initSwipe === 'function');
+    T.assert('_pages has 5 entries', App._pages.length === 5);
+    T.eq('first page is home', App._pages[0], 'home');
+    T.eq('last page is settings', App._pages[4], 'settings');
+    T.assert('projects in pages', App._pages.includes('projects'));
 });
 
 T.suite('App pages', () => {
