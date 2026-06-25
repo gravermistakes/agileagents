@@ -17,7 +17,7 @@ const ProjectsPage = {
 
     render() {
         const container = document.getElementById('page-container');
-        if (this._view === 'board' && this._activeProject) {
+        if (this._view === 'board' && this._activeProject !== null) {
             this.renderBoard(container);
         } else {
             this.renderList(container);

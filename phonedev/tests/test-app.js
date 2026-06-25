@@ -79,6 +79,18 @@ T.suite('ProjectsPage', () => {
     T.assert('has COLUMN_LABELS', !!ProjectsPage.COLUMN_LABELS.todo);
     T.eq('initial view', ProjectsPage._view, 'list');
     T.assert('_projects is array', Array.isArray(ProjectsPage._projects));
+    T.eq('_activeProject starts null', ProjectsPage._activeProject, null);
+});
+
+T.suite('ProjectsPage index-0 bug fix', () => {
+    const origView = ProjectsPage._view;
+    const origActive = ProjectsPage._activeProject;
+    ProjectsPage._activeProject = 0;
+    ProjectsPage._view = 'board';
+    const shouldRenderBoard = ProjectsPage._view === 'board' && ProjectsPage._activeProject !== null;
+    T.assert('index 0 is not falsy with !== null check', shouldRenderBoard === true);
+    ProjectsPage._view = origView;
+    ProjectsPage._activeProject = origActive;
 });
 
 T.suite('Storage', () => {

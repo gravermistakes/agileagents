@@ -325,10 +325,10 @@ const ReposPage = {
                     <button onclick="ReposPage.insertSymbol('{}')">{ }</button>
                     <button onclick="ReposPage.insertSymbol('()')">( )</button>
                     <button onclick="ReposPage.insertSymbol('[]')">[ ]</button>
-                    <button onclick="ReposPage.insertSymbol('&quot;&quot')">" "</button>
+                    <button onclick="ReposPage.insertSymbol('&quot;&quot;')">" "</button>
                     <button onclick="ReposPage.insertSymbol(&quot;''&quot;)">' '</button>
                     <button onclick="ReposPage.insertSymbol(';')">;</button>
-                    <button onclick="ReposPage.insertSymbol(':')">=</button>
+                    <button onclick="ReposPage.insertSymbol('=')">=</button>
                     <button onclick="ReposPage.insertSymbol('=&gt;')">=&gt;</button>
                     <button onclick="ReposPage.insertSymbol('//')">//</button>
                 </div>
@@ -441,10 +441,11 @@ const ReposPage = {
         btn.textContent = 'Committing...';
 
         try {
-            await GitHub.updateFile(
+            const result = await GitHub.updateFile(
                 this._currentOwner, this._currentRepo,
                 this._currentPath, this._editContent, this._fileSha, message
             );
+            this._fileSha = result.content.sha;
             this._fileContent = this._editContent;
             this._editing = false;
             this._editContent = null;

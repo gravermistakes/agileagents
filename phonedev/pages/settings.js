@@ -136,7 +136,7 @@ const SettingsPage = {
             if (el) {
                 el.innerHTML = `
                     <div style="display:flex;align-items:center;gap:10px">
-                        <img src="${user.avatar_url}" style="width:32px;height:32px;border-radius:50%">
+                        <img src="${UI.escapeAttr(user.avatar_url)}" style="width:32px;height:32px;border-radius:50%">
                         <div>
                             <div style="font-weight:600">${UI.escapeHtml(user.login)}</div>
                             <div style="font-size:12px;color:var(--text-muted)">${user.public_repos} repos</div>

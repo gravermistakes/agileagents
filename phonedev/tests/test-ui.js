@@ -12,6 +12,8 @@ T.suite('UI.escapeAttr', () => {
     T.eq('escapes backslashes', UI.escapeAttr('a\\b'), 'a\\\\b');
     T.eq('escapes ampersand', UI.escapeAttr('a&b'), 'a&amp;b');
     T.eq('handles XSS payload', UI.escapeAttr("'); alert(1)//"), "&#39;); alert(1)//");
+    T.eq('escapes angle brackets', UI.escapeAttr('<img onerror=alert(1)>'), '&lt;img onerror=alert(1)&gt;');
+    T.eq('full XSS breakout', UI.escapeAttr("x'><img src=x>"), "x&#39;&gt;&lt;img src=x&gt;");
     T.eq('passes safe strings', UI.escapeAttr('hello-world'), 'hello-world');
 });
 

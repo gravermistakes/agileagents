@@ -231,7 +231,11 @@ const AI = {
             throw new Error(`Gemini ${res.status}: ${err}`);
         }
         const data = await res.json();
-        return data.candidates[0].content.parts[0].text;
+        const candidate = data.candidates?.[0];
+        if (!candidate?.content?.parts?.[0]?.text) {
+            throw new Error('Gemini: response blocked by safety filter');
+        }
+        return candidate.content.parts[0].text;
     },
 
     async sendStream(userMessage, onChunk, systemPrompt = 'default') {
