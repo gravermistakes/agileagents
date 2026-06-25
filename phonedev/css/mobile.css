@@ -11,6 +11,12 @@
         padding: 14px;
         margin-bottom: 10px;
     }
+
+    .kanban-card-actions button {
+        min-width: 36px;
+        min-height: 36px;
+        font-size: 14px;
+    }
 }
 
 @media (hover: none) and (pointer: coarse) {
@@ -19,7 +25,10 @@
     }
 
     .list-item,
-    .file-item {
+    .file-item,
+    .kanban-card,
+    .quick-prompt-chip,
+    .chat-mode-pill {
         -webkit-tap-highlight-color: transparent;
     }
 
@@ -37,6 +46,16 @@
 
     .list-item {
         min-height: 52px;
+    }
+
+    .symbol-bar button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .kanban-card-actions button {
+        min-width: 36px;
+        min-height: 36px;
     }
 }
 

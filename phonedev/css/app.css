@@ -715,3 +715,107 @@ input::placeholder, textarea::placeholder {
     font-size: 13px;
     margin-top: 6px;
 }
+
+/* --- Progress Bar --- */
+.progress-bar {
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 2px;
+    transition: width 0.3s;
+}
+
+/* --- Kanban Board --- */
+.kanban-columns {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.kanban-column {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.kanban-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+}
+
+.kanban-count {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 400;
+}
+
+.kanban-cards {
+    padding: 8px;
+    min-height: 40px;
+}
+
+.kanban-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 6px;
+}
+
+.kanban-card:last-child { margin-bottom: 0; }
+
+.kanban-card-text {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.kanban-card-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.kanban-card-actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.kanban-card-actions button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.kanban-card-actions button:active {
+    background: var(--bg-tertiary);
+}
+
+.kanban-empty {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 12px 0;
+}

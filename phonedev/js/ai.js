@@ -231,7 +231,11 @@ const AI = {
             throw new Error(`Gemini ${res.status}: ${err}`);
         }
         const data = await res.json();
-        return data.candidates[0].content.parts[0].text;
+        const candidate = data.candidates?.[0];
+        if (!candidate?.content?.parts?.[0]?.text) {
+            throw new Error('Gemini: response blocked by safety filter');
+        }
+        return candidate.content.parts[0].text;
     },
 
     async sendStream(userMessage, onChunk, systemPrompt = 'default') {
@@ -247,6 +251,7 @@ const AI = {
             } else {
                 fullReply = await this._streamOpenAI(userMessage, onChunk, systemPrompt);
             }
+            if (!fullReply) throw new Error('Empty response — may be blocked by content filter');
             this._messages.push({ role: 'assistant', content: fullReply });
             await Storage.setJSON('chat_history', this._messages);
             return fullReply;

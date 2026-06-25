@@ -31,8 +31,9 @@ const UI = {
     },
 
     escapeAttr(str) {
-        return String(str).replace(/[&'"\\]/g, c => ({
-            '&': '&amp;', "'": '&#39;', '"': '&quot;', '\\': '\\\\'
+        return String(str).replace(/[&'"\\<>]/g, c => ({
+            '&': '&amp;', "'": '&#39;', '"': '&quot;', '\\': '\\\\',
+            '<': '&lt;', '>': '&gt;'
         })[c]);
     },
 

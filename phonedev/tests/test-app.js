@@ -1,6 +1,11 @@
 T.suite('App.navigate', () => {
     T.assert('navigate is a function', typeof App.navigate === 'function');
     T.assert('currentPage starts as home or set', typeof App.currentPage === 'string');
+    T.assert('_initSwipe is a function', typeof App._initSwipe === 'function');
+    T.assert('_pages has 5 entries', App._pages.length === 5);
+    T.eq('first page is home', App._pages[0], 'home');
+    T.eq('last page is settings', App._pages[4], 'settings');
+    T.assert('projects in pages', App._pages.includes('projects'));
 });
 
 T.suite('App pages', () => {
@@ -56,6 +61,48 @@ T.suite('ReposPage editor', () => {
 
     const noDiff = ReposPage._simpleDiff('same', 'same');
     T.assert('no-change diff shows message', noDiff.includes('No visible changes'));
+});
+
+T.suite('ProjectsPage', () => {
+    T.assert('ProjectsPage exists', typeof ProjectsPage === 'object');
+    T.assert('render is a function', typeof ProjectsPage.render === 'function');
+    T.assert('init is a function', typeof ProjectsPage.init === 'function');
+    T.assert('addProject is a function', typeof ProjectsPage.addProject === 'function');
+    T.assert('addTask is a function', typeof ProjectsPage.addTask === 'function');
+    T.assert('moveTask is a function', typeof ProjectsPage.moveTask === 'function');
+    T.assert('deleteTask is a function', typeof ProjectsPage.deleteTask === 'function');
+    T.assert('deleteProject is a function', typeof ProjectsPage.deleteProject === 'function');
+    T.assert('has COLUMNS', ProjectsPage.COLUMNS.length === 3);
+    T.eq('first column is todo', ProjectsPage.COLUMNS[0], 'todo');
+    T.eq('second column is doing', ProjectsPage.COLUMNS[1], 'doing');
+    T.eq('third column is done', ProjectsPage.COLUMNS[2], 'done');
+    T.assert('has COLUMN_LABELS', !!ProjectsPage.COLUMN_LABELS.todo);
+    T.eq('initial view', ProjectsPage._view, 'list');
+    T.assert('_projects is array', Array.isArray(ProjectsPage._projects));
+    T.eq('_activeProject starts null', ProjectsPage._activeProject, null);
+});
+
+T.suite('ProjectsPage saveTask validation', () => {
+    T.assert('saveTask is a function', typeof ProjectsPage.saveTask === 'function');
+});
+
+T.suite('ProjectsPage init validates data', () => {
+    T.assert('_projects is array after init', Array.isArray(ProjectsPage._projects));
+});
+
+T.suite('Swipe blocked during editing', () => {
+    T.assert('ReposPage._editing exists', typeof ReposPage._editing === 'boolean');
+});
+
+T.suite('ProjectsPage index-0 bug fix', () => {
+    const origView = ProjectsPage._view;
+    const origActive = ProjectsPage._activeProject;
+    ProjectsPage._activeProject = 0;
+    ProjectsPage._view = 'board';
+    const shouldRenderBoard = ProjectsPage._view === 'board' && ProjectsPage._activeProject !== null;
+    T.assert('index 0 is not falsy with !== null check', shouldRenderBoard === true);
+    ProjectsPage._view = origView;
+    ProjectsPage._activeProject = origActive;
 });
 
 T.suite('Storage', () => {

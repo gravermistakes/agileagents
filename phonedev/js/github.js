@@ -57,7 +57,8 @@ const GitHub = {
     },
 
     async getFileContent(owner, repo, path) {
-        const data = await this._fetch(`/repos/${owner}/${repo}/contents/${path}`);
+        const encoded = path.split('/').map(encodeURIComponent).join('/');
+        const data = await this._fetch(`/repos/${owner}/${repo}/contents/${encoded}`);
         if (data.encoding === 'base64') {
             return { content: atob(data.content), sha: data.sha, name: data.name, size: data.size };
         }
