@@ -192,8 +192,9 @@ const ReposPage = {
             const name = this._currentPath.split('/').pop();
             const fence = '`'.repeat(Math.max(3, (this._fileContent.match(/`{3,}/g) || []).reduce((m, s) => Math.max(m, s.length), 0) + 1));
             ChatPage._pendingContext = `\`${name}\`:\n${fence}\n${this._fileContent}\n${fence}\n\n`;
+            ChatPage._pendingFileName = name;
             App.navigate('chat');
-            UI.toast('File attached to chat');
+            UI.toast('File attached');
         }
     },
 };
