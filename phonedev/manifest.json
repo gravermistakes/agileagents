@@ -2,7 +2,7 @@
     "name": "PhoneDev",
     "short_name": "PhoneDev",
     "description": "Mobile-first developer workspace",
-    "start_url": "/phonedev/",
+    "start_url": "./",
     "display": "standalone",
     "orientation": "portrait",
     "background_color": "#0d1117",

@@ -8,7 +8,7 @@ const App = {
 
         // Register service worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/phonedev/sw.js').catch(() => {});
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
         }
 
         // Nav button handlers
