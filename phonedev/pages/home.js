@@ -66,7 +66,7 @@ const HomePage = {
             if (!list) return;
 
             list.innerHTML = repos.slice(0, 5).map(repo => `
-                <div class="list-item" onclick="ReposPage.openRepo('${repo.owner.login}', '${repo.name}'); App.navigate('repos')">
+                <div class="list-item" onclick="ReposPage.openRepo('${UI.escapeAttr(repo.owner.login)}', '${UI.escapeAttr(repo.name)}'); App.navigate('repos')">
                     <div>
                         <div class="title">${UI.escapeHtml(repo.name)}</div>
                         <div class="subtitle">${UI.timeAgo(repo.updated_at)} · ${repo.language || 'Unknown'}</div>

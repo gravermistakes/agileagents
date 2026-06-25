@@ -30,6 +30,12 @@ const UI = {
         return div.innerHTML;
     },
 
+    escapeAttr(str) {
+        return String(str).replace(/[&'"\\]/g, c => ({
+            '&': '&amp;', "'": '&#39;', '"': '&quot;', '\\': '\\\\'
+        })[c]);
+    },
+
     renderMarkdown(text) {
         let html = this.escapeHtml(text);
         // Code blocks

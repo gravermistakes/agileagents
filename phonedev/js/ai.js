@@ -49,9 +49,9 @@ const AI = {
         return this.MODELS.find(m => m.id === this._model) || this.MODELS[0];
     },
 
-    clearHistory() {
+    async clearHistory() {
         this._messages = [];
-        Storage.delete('chat_history');
+        await Storage.delete('chat_history');
     },
 
     async send(userMessage, systemPrompt = 'default') {

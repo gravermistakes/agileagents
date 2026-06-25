@@ -67,7 +67,7 @@ const SettingsPage = {
                         Mobile-first developer workspace<br>
                         Built for phone-only developers<br><br>
                         All data stored locally on your device.<br>
-                        API keys encrypted in IndexedDB.
+                        API keys stored locally in IndexedDB.
                     </p>
                 </div>
 
@@ -128,18 +128,21 @@ const SettingsPage = {
 
         try {
             await AI.setKey(key);
-            // Test with a quick request
+            const res = await fetch('https://api.groq.com/openai/v1/models', {
+                headers: { 'Authorization': `Bearer ${key}` },
+            });
+            if (!res.ok) throw new Error(`${res.status}`);
             UI.toast('Groq connected!');
             this.render();
         } catch (e) {
             await AI.clearKey();
-            UI.toast('Error: ' + e.message);
+            UI.toast('Invalid key: ' + e.message);
         }
     },
 
     async disconnectAI() {
         await AI.clearKey();
-        AI.clearHistory();
+        await AI.clearHistory();
         UI.toast('Groq disconnected');
         this.render();
     },
@@ -168,7 +171,7 @@ const SettingsPage = {
         if (confirm('Delete all data? This cannot be undone.')) {
             await GitHub.clearToken();
             await AI.clearKey();
-            AI.clearHistory();
+            await AI.clearHistory();
             indexedDB.deleteDatabase('phonedev');
             UI.toast('All data cleared');
             location.reload();

@@ -47,7 +47,7 @@ const ReposPage = {
             const el = document.getElementById('repo-list');
             if (!el) return;
             el.innerHTML = repos.map(repo => `
-                <div class="list-item" onclick="ReposPage.openRepo('${repo.owner.login}', '${repo.name}')">
+                <div class="list-item" onclick="ReposPage.openRepo('${UI.escapeAttr(repo.owner.login)}', '${UI.escapeAttr(repo.name)}')">
                     <div class="icon">${repo.private ? '🔒' : '📦'}</div>
                     <div>
                         <div class="title">${UI.escapeHtml(repo.name)}</div>
@@ -83,7 +83,7 @@ const ReposPage = {
                     <a onclick="ReposPage.navigateTo('')">root</a>
                     ${pathParts.map((part, i) => {
                         const path = pathParts.slice(0, i + 1).join('/');
-                        return `<span class="sep">/</span><a onclick="ReposPage.navigateTo('${path}')">${UI.escapeHtml(part)}</a>`;
+                        return `<span class="sep">/</span><a onclick="ReposPage.navigateTo('${UI.escapeAttr(path)}')">${UI.escapeHtml(part)}</a>`;
                     }).join('')}
                 </div>
                 <div id="file-tree">
@@ -108,7 +108,7 @@ const ReposPage = {
 
             el.innerHTML = sorted.map(item => `
                 <div class="file-item ${item.type === 'dir' ? 'dir' : ''}"
-                     onclick="ReposPage.${item.type === 'dir' ? 'navigateTo' : 'openFile'}('${item.path}')">
+                     onclick="ReposPage.${item.type === 'dir' ? 'navigateTo' : 'openFile'}('${UI.escapeAttr(item.path)}')">
                     <span class="file-icon">${UI.fileIcon(item.name, item.type === 'dir')}</span>
                     <span class="file-name">${UI.escapeHtml(item.name)}</span>
                     ${item.size ? `<span style="color:var(--text-muted);font-size:12px">${UI.formatSize(item.size)}</span>` : ''}
@@ -190,7 +190,8 @@ const ReposPage = {
     sendToAI() {
         if (this._fileContent) {
             const name = this._currentPath.split('/').pop();
-            ChatPage._pendingContext = `\`${name}\`:\n\`\`\`\n${this._fileContent}\n\`\`\`\n\n`;
+            const fence = '`'.repeat(Math.max(3, (this._fileContent.match(/`{3,}/g) || []).reduce((m, s) => Math.max(m, s.length), 0) + 1));
+            ChatPage._pendingContext = `\`${name}\`:\n${fence}\n${this._fileContent}\n${fence}\n\n`;
             App.navigate('chat');
             UI.toast('File attached to chat');
         }
