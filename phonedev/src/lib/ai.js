@@ -1,3 +1,8 @@
+import { get } from 'svelte/store';
+import Storage from './storage.js';
+import GitHub from './github.js';
+import { repoContext, pendingEdits } from '../stores.js';
+
 const AI = {
     _key: null,
     _model: 'llama-3.3-70b-versatile',
@@ -156,7 +161,7 @@ const AI = {
         switch (name) {
             case 'read_file': {
                 const file = await GitHub.getFileContent(args.owner, args.repo, args.path);
-                if (typeof file.content !== 'string') return `Error: ${args.path} is not a regular file (may be a symlink or submodule)`;
+                if (typeof file.content !== 'string') return `Error: ${args.path} is not a regular file`;
                 return `File: ${args.path} (${file.content.length} chars)\n\n${file.content}`;
             }
             case 'list_files': {
@@ -168,8 +173,7 @@ const AI = {
                 const file = await GitHub.getFileContent(args.owner, args.repo, args.path);
                 if (typeof file.content !== 'string') return `Error: ${args.path} is not a regular file — cannot edit`;
                 const editId = Date.now();
-                if (!ChatPage._pendingEdits) ChatPage._pendingEdits = [];
-                ChatPage._pendingEdits.push({
+                pendingEdits.update(list => [...list, {
                     id: editId,
                     owner: args.owner,
                     repo: args.repo,
@@ -179,7 +183,7 @@ const AI = {
                     sha: file.sha,
                     message: args.commit_message,
                     status: 'pending',
-                });
+                }]);
                 return `Edit proposed for ${args.path}. Diff shown to user for approval. (edit_id: ${editId})`;
             }
             default:
@@ -191,14 +195,12 @@ const AI = {
         if (!this._key) throw new Error('API key not set');
         const p = this.PROVIDERS[this._provider];
 
-        const contextHint = (ReposPage._currentOwner && ReposPage._currentRepo)
-            ? `\nThe user is currently browsing: ${ReposPage._currentOwner}/${ReposPage._currentRepo}` +
-              (ReposPage._currentPath ? ` at path: ${ReposPage._currentPath}` : '')
+        const ctx = get(repoContext);
+        const contextHint = (ctx.owner && ctx.repo)
+            ? `\nThe user is currently browsing: ${ctx.owner}/${ctx.repo}${ctx.path ? ` at path: ${ctx.path}` : ''}`
             : '';
 
-        const workingMessages = [
-            { role: 'user', content: userMessage },
-        ];
+        const workingMessages = [{ role: 'user', content: userMessage }];
         const history = this._messages.slice(-16).filter(m => m.role === 'user' || (m.role === 'assistant' && m.content));
 
         this._messages.push({ role: 'user', content: userMessage });
@@ -329,13 +331,9 @@ const AI = {
         if (history) this._messages = history;
     },
 
-    isConnected() {
-        return !!this._key;
-    },
+    isConnected() { return !!this._key; },
 
-    getProviderModels() {
-        return this.MODELS[this._provider] || [];
-    },
+    getProviderModels() { return this.MODELS[this._provider] || []; },
 
     getModel() {
         const models = this.getProviderModels();
@@ -382,7 +380,7 @@ const AI = {
         await Storage.delete('chat_history');
     },
 
-    _buildOpenAIBody(userMessage, systemPrompt, stream) {
+    _buildOpenAIBody(systemPrompt, stream) {
         const sysPrompt = this.SYSTEM_PROMPTS[systemPrompt] || this.SYSTEM_PROMPTS.default;
         return {
             model: this._model,
@@ -396,11 +394,10 @@ const AI = {
         };
     },
 
-    _buildGeminiBody(userMessage, systemPrompt) {
+    _buildGeminiBody(systemPrompt) {
         const sysPrompt = this.SYSTEM_PROMPTS[systemPrompt] || this.SYSTEM_PROMPTS.default;
         const contents = [];
-        const history = this._messages.slice(-20);
-        for (const msg of history) {
+        for (const msg of this._messages.slice(-20)) {
             contents.push({
                 role: msg.role === 'assistant' ? 'model' : 'user',
                 parts: [{ text: msg.content }],
@@ -422,9 +419,9 @@ const AI = {
         try {
             let reply;
             if (p.isGemini) {
-                reply = await this._sendGemini(userMessage, systemPrompt);
+                reply = await this._sendGemini(systemPrompt);
             } else {
-                reply = await this._sendOpenAI(userMessage, systemPrompt);
+                reply = await this._sendOpenAI(systemPrompt);
             }
             this._messages.push({ role: 'assistant', content: reply });
             await Storage.setJSON('chat_history', this._messages);
@@ -435,42 +432,27 @@ const AI = {
         }
     },
 
-    async _sendOpenAI(userMessage, systemPrompt) {
+    async _sendOpenAI(systemPrompt) {
         const p = this.PROVIDERS[this._provider];
-        const body = this._buildOpenAIBody(userMessage, systemPrompt, false);
+        const body = this._buildOpenAIBody(systemPrompt, false);
         const res = await fetch(p.baseUrl + '/chat/completions', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${this._key}`,
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Authorization': `Bearer ${this._key}`, 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
         });
-        if (!res.ok) {
-            const err = await res.text();
-            throw new Error(`${p.name} ${res.status}: ${err}`);
-        }
+        if (!res.ok) throw new Error(`${p.name} ${res.status}: ${await res.text()}`);
         const data = await res.json();
         return data.choices[0].message.content;
     },
 
-    async _sendGemini(userMessage, systemPrompt) {
-        const body = this._buildGeminiBody(userMessage, systemPrompt);
+    async _sendGemini(systemPrompt) {
+        const body = this._buildGeminiBody(systemPrompt);
         const url = `${this.PROVIDERS.gemini.baseUrl}/models/${this._model}:generateContent?key=${this._key}`;
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-            const err = await res.text();
-            throw new Error(`Gemini ${res.status}: ${err}`);
-        }
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
         const data = await res.json();
         const candidate = data.candidates?.[0];
-        if (!candidate?.content?.parts?.[0]?.text) {
-            throw new Error('Gemini: response blocked by safety filter');
-        }
+        if (!candidate?.content?.parts?.[0]?.text) throw new Error('Gemini: response blocked by safety filter');
         return candidate.content.parts[0].text;
     },
 
@@ -483,9 +465,9 @@ const AI = {
         try {
             let fullReply;
             if (p.isGemini) {
-                fullReply = await this._streamGemini(userMessage, onChunk, systemPrompt);
+                fullReply = await this._streamGemini(onChunk, systemPrompt);
             } else {
-                fullReply = await this._streamOpenAI(userMessage, onChunk, systemPrompt);
+                fullReply = await this._streamOpenAI(onChunk, systemPrompt);
             }
             if (!fullReply) throw new Error('Empty response — may be blocked by content filter');
             this._messages.push({ role: 'assistant', content: fullReply });
@@ -497,21 +479,15 @@ const AI = {
         }
     },
 
-    async _streamOpenAI(userMessage, onChunk, systemPrompt) {
+    async _streamOpenAI(onChunk, systemPrompt) {
         const p = this.PROVIDERS[this._provider];
-        const body = this._buildOpenAIBody(userMessage, systemPrompt, true);
+        const body = this._buildOpenAIBody(systemPrompt, true);
         const res = await fetch(p.baseUrl + '/chat/completions', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${this._key}`,
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Authorization': `Bearer ${this._key}`, 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
         });
-        if (!res.ok) {
-            const err = await res.text();
-            throw new Error(`${p.name} ${res.status}: ${err}`);
-        }
+        if (!res.ok) throw new Error(`${p.name} ${res.status}: ${await res.text()}`);
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -531,28 +507,18 @@ const AI = {
                 try {
                     const parsed = JSON.parse(data);
                     const delta = parsed.choices[0]?.delta?.content;
-                    if (delta) {
-                        fullReply += delta;
-                        onChunk(delta, fullReply);
-                    }
+                    if (delta) { fullReply += delta; onChunk(delta, fullReply); }
                 } catch {}
             }
         }
         return fullReply;
     },
 
-    async _streamGemini(userMessage, onChunk, systemPrompt) {
-        const body = this._buildGeminiBody(userMessage, systemPrompt);
+    async _streamGemini(onChunk, systemPrompt) {
+        const body = this._buildGeminiBody(systemPrompt);
         const url = `${this.PROVIDERS.gemini.baseUrl}/models/${this._model}:streamGenerateContent?alt=sse&key=${this._key}`;
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-            const err = await res.text();
-            throw new Error(`Gemini ${res.status}: ${err}`);
-        }
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -571,13 +537,12 @@ const AI = {
                 try {
                     const parsed = JSON.parse(data);
                     const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (text) {
-                        fullReply += text;
-                        onChunk(text, fullReply);
-                    }
+                    if (text) { fullReply += text; onChunk(text, fullReply); }
                 } catch {}
             }
         }
         return fullReply;
     },
 };
+
+export default AI;

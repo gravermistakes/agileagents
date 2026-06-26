@@ -52,8 +52,11 @@ const HomePage = {
                     <button class="btn btn-secondary" onclick="App.navigate('repos')" style="margin-bottom:8px">
                         📁 Browse Repos
                     </button>
-                    <button class="btn btn-secondary" onclick="App.navigate('projects')">
+                    <button class="btn btn-secondary" onclick="App.navigate('projects')" style="margin-bottom:8px">
                         📋 Task Board
+                    </button>
+                    <button class="btn btn-secondary" onclick="App.navigate('apps')">
+                        📱 Apps & Terminal
                     </button>
                 </div>
 

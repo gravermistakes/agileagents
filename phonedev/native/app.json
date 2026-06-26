@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "PhoneDev",
+    "slug": "phonedev",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "phonedev",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0d1117",
+      "resizeMode": "contain"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d1117"
+      },
+      "package": "dev.phonedev.app",
+      "permissions": ["INTERNET"],
+      "allowBackup": false
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0d1117"
+        }
+      ]
+    ]
+  }
+}

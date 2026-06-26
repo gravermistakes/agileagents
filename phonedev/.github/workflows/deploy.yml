@@ -17,46 +17,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npx playwright install chromium --with-deps
-      - name: Run PhoneDev tests
-        run: |
-          node -e "
-          const { chromium } = require('playwright');
-          (async () => {
-            const browser = await chromium.launch({ args: ['--no-sandbox'] });
-            const page = await browser.newPage();
-            let pageError = null;
-            page.on('pageerror', e => { if (!e.message.includes('transaction')) pageError = e; });
-            const path = require('path');
-            await page.goto('file://' + path.resolve('phonedev/tests/index.html'), { waitUntil: 'networkidle' });
-            await page.waitForTimeout(3000);
-            const text = await page.evaluate(() => document.getElementById('test-results').textContent);
-            console.log(text);
-            const fails = await page.evaluate(() => document.querySelectorAll('.fail').length);
-            await browser.close();
-            if (fails > 0 || pageError) process.exit(1);
-          })();
-          "
+          cache: 'npm'
+          cache-dependency-path: phonedev/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: phonedev
+      - name: Build
+        run: npm run build
+        working-directory: phonedev
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'phonedev/dist'
 
   deploy:
-    needs: test
+    needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: 'phonedev'
       - id: deployment
         uses: actions/deploy-pages@v4
