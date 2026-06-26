@@ -24,6 +24,41 @@ T.suite('AI.SYSTEM_PROMPTS', () => {
     T.assert('has review prompt', !!AI.SYSTEM_PROMPTS.review);
     T.assert('has explain prompt', !!AI.SYSTEM_PROMPTS.explain);
     T.assert('has debug prompt', !!AI.SYSTEM_PROMPTS.debug);
+    T.assert('has agent prompt', !!AI.SYSTEM_PROMPTS.agent);
+    T.assert('agent prompt mentions tools', AI.SYSTEM_PROMPTS.agent.includes('tools'));
+});
+
+T.suite('AI.AGENT_TOOLS', () => {
+    T.assert('has tools array', Array.isArray(AI.AGENT_TOOLS));
+    T.assert('has 3 tools', AI.AGENT_TOOLS.length === 3);
+    T.eq('first tool is read_file', AI.AGENT_TOOLS[0].function.name, 'read_file');
+    T.eq('second tool is list_files', AI.AGENT_TOOLS[1].function.name, 'list_files');
+    T.eq('third tool is edit_file', AI.AGENT_TOOLS[2].function.name, 'edit_file');
+    T.assert('each tool has parameters', AI.AGENT_TOOLS.every(t => t.function.parameters));
+    T.assert('read_file requires owner/repo/path', AI.AGENT_TOOLS[0].function.parameters.required.length === 3);
+});
+
+T.suite('AI agentic methods', () => {
+    T.assert('sendAgentic exists', typeof AI.sendAgentic === 'function');
+    T.assert('_executeTool exists', typeof AI._executeTool === 'function');
+    T.assert('_agentCallOpenAI exists', typeof AI._agentCallOpenAI === 'function');
+    T.assert('_agentCallGemini exists', typeof AI._agentCallGemini === 'function');
+    T.assert('_geminiToolDeclarations exists', typeof AI._geminiToolDeclarations === 'function');
+    T.assert('_toGeminiSchema exists', typeof AI._toGeminiSchema === 'function');
+});
+
+T.suite('AI._toGeminiSchema', () => {
+    const result = AI._toGeminiSchema({ type: 'object', properties: { name: { type: 'string', description: 'test' } }, required: ['name'] });
+    T.eq('converts object type', result.type, 'OBJECT');
+    T.eq('converts string type', result.properties.name.type, 'STRING');
+    T.assert('preserves required', result.required.includes('name'));
+});
+
+T.suite('AI._geminiToolDeclarations', () => {
+    const decls = AI._geminiToolDeclarations();
+    T.eq('has 3 declarations', decls.length, 3);
+    T.eq('first is read_file', decls[0].name, 'read_file');
+    T.eq('params type is OBJECT', decls[0].parameters.type, 'OBJECT');
 });
 
 T.suite('AI.getModel', () => {

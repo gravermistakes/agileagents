@@ -819,3 +819,61 @@ input::placeholder, textarea::placeholder {
     font-size: 13px;
     padding: 12px 0;
 }
+
+/* --- Agent Tool Calls --- */
+.tool-call-entry {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.tool-call-header {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.tool-call-args {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: monospace;
+}
+
+.tool-call-result {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 100px;
+    overflow: auto;
+}
+
+.agent-thinking {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 4px 0;
+}
+
+.edit-proposal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-top: 12px;
+}
+
+.edit-proposal-header {
+    font-size: 14px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}

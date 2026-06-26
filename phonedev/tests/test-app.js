@@ -21,9 +21,21 @@ T.suite('App pages', () => {
 });
 
 T.suite('ChatPage.MODES', () => {
-    T.assert('has modes', ChatPage.MODES.length === 4);
+    T.assert('has 5 modes', ChatPage.MODES.length === 5);
     T.eq('default mode', ChatPage.MODES[0].key, 'default');
+    T.eq('agent mode', ChatPage.MODES[1].key, 'agent');
     T.assert('each mode has key and label', ChatPage.MODES.every(m => m.key && m.label));
+});
+
+T.suite('ChatPage agent features', () => {
+    T.assert('has AGENT_PROMPTS', ChatPage.AGENT_PROMPTS.length >= 4);
+    T.assert('all agent prompts are strings', ChatPage.AGENT_PROMPTS.every(p => typeof p === 'string'));
+    T.assert('_pendingEdits is array', Array.isArray(ChatPage._pendingEdits));
+    T.assert('approveEdit is a function', typeof ChatPage.approveEdit === 'function');
+    T.assert('rejectEdit is a function', typeof ChatPage.rejectEdit === 'function');
+    T.assert('_sendAgent is a function', typeof ChatPage._sendAgent === 'function');
+    T.assert('_formatToolArgs is a function', typeof ChatPage._formatToolArgs === 'function');
+    T.eq('formats owner/repo/path', ChatPage._formatToolArgs({ owner: 'me', repo: 'app', path: 'src/main.js' }), 'me/app/src/main.js');
 });
 
 T.suite('ChatPage.QUICK_PROMPTS', () => {

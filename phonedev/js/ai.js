@@ -73,6 +73,234 @@ const AI = {
         review: 'You are a code reviewer. Point out bugs, security issues, and improvements. Be direct.',
         explain: 'You explain code clearly and concisely. Use examples when helpful.',
         debug: 'You are a debugging expert. Analyze errors systematically. Ask clarifying questions if needed.',
+        agent: 'You are a coding agent with access to GitHub repositories via tools. When asked about code, USE your tools to read the actual files — never guess. When asked to fix or change code, read the file first with read_file, then propose an edit with edit_file. Be concise. Show brief reasoning before acting.',
+    },
+
+    AGENT_TOOLS: [
+        {
+            type: 'function',
+            function: {
+                name: 'read_file',
+                description: 'Read a file from a GitHub repository. Returns the file content.',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        owner: { type: 'string', description: 'Repository owner (GitHub username)' },
+                        repo: { type: 'string', description: 'Repository name' },
+                        path: { type: 'string', description: 'File path in the repository' },
+                    },
+                    required: ['owner', 'repo', 'path'],
+                },
+            },
+        },
+        {
+            type: 'function',
+            function: {
+                name: 'list_files',
+                description: 'List files and directories at a path in a GitHub repository.',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        owner: { type: 'string', description: 'Repository owner' },
+                        repo: { type: 'string', description: 'Repository name' },
+                        path: { type: 'string', description: 'Directory path (empty string for root)' },
+                    },
+                    required: ['owner', 'repo'],
+                },
+            },
+        },
+        {
+            type: 'function',
+            function: {
+                name: 'edit_file',
+                description: 'Propose an edit to a file. The user sees a diff and must approve before the commit happens. Provide the complete new file content.',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        owner: { type: 'string', description: 'Repository owner' },
+                        repo: { type: 'string', description: 'Repository name' },
+                        path: { type: 'string', description: 'File path' },
+                        new_content: { type: 'string', description: 'The complete new file content' },
+                        commit_message: { type: 'string', description: 'Commit message describing the change' },
+                    },
+                    required: ['owner', 'repo', 'path', 'new_content', 'commit_message'],
+                },
+            },
+        },
+    ],
+
+    _geminiToolDeclarations() {
+        return this.AGENT_TOOLS.map(t => ({
+            name: t.function.name,
+            description: t.function.description,
+            parameters: this._toGeminiSchema(t.function.parameters),
+        }));
+    },
+
+    _toGeminiSchema(schema) {
+        const typeMap = { string: 'STRING', number: 'NUMBER', object: 'OBJECT', array: 'ARRAY', boolean: 'BOOLEAN' };
+        const result = { type: typeMap[schema.type] || schema.type };
+        if (schema.description) result.description = schema.description;
+        if (schema.properties) {
+            result.properties = {};
+            for (const [k, v] of Object.entries(schema.properties)) {
+                result.properties[k] = this._toGeminiSchema(v);
+            }
+        }
+        if (schema.required) result.required = schema.required;
+        return result;
+    },
+
+    async _executeTool(name, args) {
+        if (!GitHub.isConnected()) return 'Error: GitHub not connected';
+        switch (name) {
+            case 'read_file': {
+                const file = await GitHub.getFileContent(args.owner, args.repo, args.path);
+                return `File: ${args.path} (${file.content.length} chars)\n\n${file.content}`;
+            }
+            case 'list_files': {
+                const items = await GitHub.getContents(args.owner, args.repo, args.path || '');
+                const list = Array.isArray(items) ? items : [items];
+                return list.map(i => `${i.type === 'dir' ? '📁' : '📄'} ${i.name}${i.size ? ` (${i.size}B)` : ''}`).join('\n');
+            }
+            case 'edit_file': {
+                const file = await GitHub.getFileContent(args.owner, args.repo, args.path);
+                const editId = Date.now();
+                if (!ChatPage._pendingEdits) ChatPage._pendingEdits = [];
+                ChatPage._pendingEdits.push({
+                    id: editId,
+                    owner: args.owner,
+                    repo: args.repo,
+                    path: args.path,
+                    oldContent: file.content,
+                    newContent: args.new_content,
+                    sha: file.sha,
+                    message: args.commit_message,
+                    status: 'pending',
+                });
+                return `Edit proposed for ${args.path}. Diff shown to user for approval. (edit_id: ${editId})`;
+            }
+            default:
+                return `Unknown tool: ${name}`;
+        }
+    },
+
+    async sendAgentic(userMessage, onProgress) {
+        if (!this._key) throw new Error('API key not set');
+        const p = this.PROVIDERS[this._provider];
+
+        const contextHint = (ReposPage._currentOwner && ReposPage._currentRepo)
+            ? `\nThe user is currently browsing: ${ReposPage._currentOwner}/${ReposPage._currentRepo}` +
+              (ReposPage._currentPath ? ` at path: ${ReposPage._currentPath}` : '')
+            : '';
+
+        const workingMessages = [
+            { role: 'user', content: userMessage },
+        ];
+        const history = this._messages.slice(-16).filter(m => m.role === 'user' || (m.role === 'assistant' && m.content));
+
+        let iterations = 0;
+        while (iterations++ < 10) {
+            onProgress('thinking', null);
+            let response;
+            if (p.isGemini) {
+                response = await this._agentCallGemini(history, workingMessages, contextHint);
+            } else {
+                response = await this._agentCallOpenAI(history, workingMessages, contextHint, p);
+            }
+
+            if (response.tool_calls && response.tool_calls.length > 0) {
+                workingMessages.push({ role: 'assistant', content: response.content || null, tool_calls: response.tool_calls });
+                for (const tc of response.tool_calls) {
+                    const args = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : tc.arguments;
+                    onProgress('tool_call', { name: tc.name, args });
+                    let result;
+                    try {
+                        result = await this._executeTool(tc.name, args);
+                    } catch (e) {
+                        result = 'Error: ' + e.message;
+                    }
+                    onProgress('tool_result', { name: tc.name, result: typeof result === 'string' ? result.slice(0, 500) : result });
+                    workingMessages.push({ role: 'tool', tool_call_id: tc.id, name: tc.name, content: typeof result === 'string' ? result : JSON.stringify(result) });
+                }
+            } else {
+                const text = response.content || '';
+                if (!text) throw new Error('Empty agent response');
+                this._messages.push({ role: 'user', content: userMessage });
+                this._messages.push({ role: 'assistant', content: text });
+                await Storage.setJSON('chat_history', this._messages);
+                return text;
+            }
+        }
+        throw new Error('Agent reached max tool iterations (10)');
+    },
+
+    async _agentCallOpenAI(history, workingMessages, contextHint, provider) {
+        const sysContent = this.SYSTEM_PROMPTS.agent + contextHint;
+        const messages = [
+            { role: 'system', content: sysContent },
+            ...history,
+            ...workingMessages.map(m => {
+                if (m.role === 'tool') return { role: 'tool', tool_call_id: m.tool_call_id, content: m.content };
+                if (m.role === 'assistant' && m.tool_calls) return {
+                    role: 'assistant', content: m.content,
+                    tool_calls: m.tool_calls.map(tc => ({ id: tc.id, type: 'function', function: { name: tc.name, arguments: typeof tc.arguments === 'string' ? tc.arguments : JSON.stringify(tc.arguments) } })),
+                };
+                return { role: m.role, content: m.content };
+            }),
+        ];
+        const body = { model: this._model, messages, tools: this.AGENT_TOOLS, temperature: 0.3, max_tokens: 4096 };
+        const res = await fetch(provider.baseUrl + '/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${this._key}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error(`${provider.name} ${res.status}: ${await res.text()}`);
+        const data = await res.json();
+        const msg = data.choices[0].message;
+        if (msg.tool_calls) {
+            return {
+                content: msg.content,
+                tool_calls: msg.tool_calls.map(tc => ({ id: tc.id, name: tc.function.name, arguments: tc.function.arguments })),
+            };
+        }
+        return { content: msg.content, tool_calls: null };
+    },
+
+    async _agentCallGemini(history, workingMessages, contextHint) {
+        const sysContent = this.SYSTEM_PROMPTS.agent + contextHint;
+        const contents = [];
+        for (const m of [...history, ...workingMessages]) {
+            if (m.role === 'user') contents.push({ role: 'user', parts: [{ text: m.content }] });
+            else if (m.role === 'assistant' && m.tool_calls) {
+                contents.push({ role: 'model', parts: m.tool_calls.map(tc => ({
+                    functionCall: { name: tc.name, args: typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : tc.arguments }
+                })) });
+            }
+            else if (m.role === 'assistant') contents.push({ role: 'model', parts: [{ text: m.content }] });
+            else if (m.role === 'tool') contents.push({ role: 'user', parts: [{ functionResponse: { name: m.name, response: { content: m.content } } }] });
+        }
+        const body = {
+            system_instruction: { parts: [{ text: sysContent }] },
+            contents,
+            tools: [{ functionDeclarations: this._geminiToolDeclarations() }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 4096 },
+        };
+        const url = `${this.PROVIDERS.gemini.baseUrl}/models/${this._model}:generateContent?key=${this._key}`;
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
+        const data = await res.json();
+        const candidate = data.candidates?.[0];
+        if (!candidate?.content?.parts) throw new Error('Gemini: no response');
+        const parts = candidate.content.parts;
+        const functionCalls = parts.filter(p => p.functionCall);
+        if (functionCalls.length > 0) {
+            return {
+                content: parts.find(p => p.text)?.text || null,
+                tool_calls: functionCalls.map((p, i) => ({ id: 'gemini_' + i, name: p.functionCall.name, arguments: p.functionCall.args })),
+            };
+        }
+        return { content: parts.map(p => p.text).filter(Boolean).join(''), tool_calls: null };
     },
 
     async init() {
