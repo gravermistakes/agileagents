@@ -10,6 +10,8 @@ const ReposPage = {
     _hljsLoaded: false,
     _editing: false,
     _editContent: null,
+    _predictTimer: null,
+    _predictVisible: false,
 
     render() {
         const container = document.getElementById('page-container');
@@ -357,6 +359,7 @@ const ReposPage = {
         });
         editor.addEventListener('input', () => {
             this._editContent = editor.value;
+            this._schedulePrediction(editor);
         });
     },
 
@@ -457,5 +460,76 @@ const ReposPage = {
             btn.textContent = 'Commit & Push';
             UI.toast('Commit failed: ' + e.message);
         }
+    },
+
+    _schedulePrediction(editor) {
+        if (this._predictTimer) clearTimeout(this._predictTimer);
+        this._hidePredictions();
+        if (!AI.isConnected()) return;
+
+        this._predictTimer = setTimeout(() => {
+            this._fetchPrediction(editor);
+        }, 800);
+    },
+
+    async _fetchPrediction(editor) {
+        if (!editor || !this._editing) return;
+        const pos = editor.selectionStart;
+        const text = editor.value;
+        if (!text.trim()) return;
+
+        const before = text.substring(Math.max(0, pos - 500), pos);
+        const after = text.substring(pos, Math.min(text.length, pos + 100));
+        const name = (this._currentPath || '').split('/').pop() || 'file';
+        const lang = this._getLang(name) || '';
+
+        const prompt = `Complete the code at the cursor position (marked with <CURSOR>). Return ONLY 1-3 short completions, each on its own line, no explanation, no markdown. Each completion should be a single statement or expression.\n\nLanguage: ${lang}\nFile: ${name}\n\n${before}<CURSOR>${after}`;
+
+        try {
+            const response = await AI.send([
+                { role: 'system', content: 'You are a code autocomplete engine. Return only raw completion text, one per line. No markdown, no explanation. Max 3 lines.' },
+                { role: 'user', content: prompt }
+            ]);
+            if (!response || !this._editing) return;
+
+            const completions = response.split('\n')
+                .map(l => l.trim())
+                .filter(l => l && l.length > 1 && l.length < 120 && !l.startsWith('```'))
+                .slice(0, 3);
+
+            if (completions.length) this._showPredictions(completions, editor);
+        } catch {
+            // silently fail — predictive coding is best-effort
+        }
+    },
+
+    _showPredictions(completions, editor) {
+        this._hidePredictions();
+        const bar = document.getElementById('symbol-bar');
+        if (!bar) return;
+
+        const wrap = document.createElement('div');
+        wrap.id = 'predict-chips';
+        wrap.className = 'predict-chips';
+        completions.forEach(c => {
+            const chip = document.createElement('button');
+            chip.className = 'predict-chip';
+            chip.textContent = c.length > 50 ? c.substring(0, 47) + '...' : c;
+            chip.title = c;
+            chip.addEventListener('click', () => {
+                this.insertSymbol(c);
+                this._hidePredictions();
+            });
+            wrap.appendChild(chip);
+        });
+
+        bar.parentNode.insertBefore(wrap, bar);
+        this._predictVisible = true;
+    },
+
+    _hidePredictions() {
+        const el = document.getElementById('predict-chips');
+        if (el) el.remove();
+        this._predictVisible = false;
     },
 };

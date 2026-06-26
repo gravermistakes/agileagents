@@ -1,6 +1,6 @@
 const App = {
     currentPage: 'home',
-    _pages: ['home', 'repos', 'chat', 'projects', 'settings'],
+    _pages: ['home', 'repos', 'chat', 'projects', 'apps', 'settings'],
     _touchStartX: 0,
     _touchStartY: 0,
 
@@ -70,6 +70,7 @@ const App = {
             case 'repos': ReposPage.render(); break;
             case 'chat': ChatPage.render(); break;
             case 'projects': ProjectsPage.render(); break;
+            case 'apps': AppsPage.render(); break;
             case 'settings': SettingsPage.render(); break;
         }
 

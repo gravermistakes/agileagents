@@ -2,10 +2,11 @@ T.suite('App.navigate', () => {
     T.assert('navigate is a function', typeof App.navigate === 'function');
     T.assert('currentPage starts as home or set', typeof App.currentPage === 'string');
     T.assert('_initSwipe is a function', typeof App._initSwipe === 'function');
-    T.assert('_pages has 5 entries', App._pages.length === 5);
+    T.assert('_pages has 6 entries', App._pages.length === 6);
     T.eq('first page is home', App._pages[0], 'home');
-    T.eq('last page is settings', App._pages[4], 'settings');
+    T.eq('last page is settings', App._pages[5], 'settings');
     T.assert('projects in pages', App._pages.includes('projects'));
+    T.assert('apps in pages', App._pages.includes('apps'));
 });
 
 T.suite('App pages', () => {
@@ -100,6 +101,38 @@ T.suite('ProjectsPage saveTask validation', () => {
 
 T.suite('ProjectsPage init validates data', () => {
     T.assert('_projects is array after init', Array.isArray(ProjectsPage._projects));
+});
+
+T.suite('AppsPage', () => {
+    T.assert('AppsPage exists', typeof AppsPage === 'object');
+    T.assert('render is a function', typeof AppsPage.render === 'function');
+    T.assert('has SERVICES', Array.isArray(AppsPage.SERVICES));
+    T.assert('4 services', AppsPage.SERVICES.length === 4);
+    T.eq('first service is discord', AppsPage.SERVICES[0].id, 'discord');
+    T.eq('second service is matrix', AppsPage.SERVICES[1].id, 'matrix');
+    T.eq('third service is kaggle', AppsPage.SERVICES[2].id, 'kaggle');
+    T.eq('fourth service is termux', AppsPage.SERVICES[3].id, 'termux');
+    T.assert('each service has name', AppsPage.SERVICES.every(s => s.name));
+    T.assert('each service has desc', AppsPage.SERVICES.every(s => s.desc));
+    T.assert('open is a function', typeof AppsPage.open === 'function');
+});
+
+T.suite('Termux', () => {
+    T.assert('Termux exists', typeof Termux === 'object');
+    T.assert('isAvailable is a function', typeof Termux.isAvailable === 'function');
+    T.assert('starts unavailable', Termux.isAvailable() === false);
+    T.assert('execute is a function', typeof Termux.execute === 'function');
+    T.assert('_history is array', Array.isArray(Termux._history));
+    T.assert('renderHistory is a function', typeof Termux.renderHistory === 'function');
+    T.assert('addOutput is a function', typeof Termux.addOutput === 'function');
+});
+
+T.suite('ReposPage predictive coding', () => {
+    T.assert('_schedulePrediction exists', typeof ReposPage._schedulePrediction === 'function');
+    T.assert('_fetchPrediction exists', typeof ReposPage._fetchPrediction === 'function');
+    T.assert('_showPredictions exists', typeof ReposPage._showPredictions === 'function');
+    T.assert('_hidePredictions exists', typeof ReposPage._hidePredictions === 'function');
+    T.assert('_predictVisible starts false', ReposPage._predictVisible === false);
 });
 
 T.suite('Swipe blocked during editing', () => {

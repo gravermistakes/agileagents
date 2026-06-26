@@ -1,4 +1,4 @@
-const CACHE_NAME = 'phonedev-v9';
+const CACHE_NAME = 'phonedev-v10';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -9,11 +9,13 @@ const STATIC_ASSETS = [
     './js/github.js',
     './js/ai.js',
     './js/ui.js',
+    './js/termux.js',
     './js/app.js',
     './pages/home.js',
     './pages/repos.js',
     './pages/chat.js',
     './pages/projects.js',
+    './pages/apps.js',
     './pages/settings.js',
     './icons/icon.svg',
     './icons/icon-192.png',
