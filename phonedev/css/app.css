@@ -1,18 +1,52 @@
 :root {
-    --bg: #0d1117;
-    --bg-secondary: #161b22;
+    /* Background layers */
+    --bg: #0e1219;
+    --bg-secondary: #171c24;
     --bg-tertiary: #21262d;
+    /* Borders */
     --border: #30363d;
-    --text: #e6edf3;
-    --text-muted: #8b949e;
-    --accent: #58a6ff;
-    --accent-dim: #1f6feb;
-    --green: #3fb950;
-    --red: #f85149;
+    --border-accent: rgba(88, 166, 255, 0.3);
+    /* Text */
+    --text: #c0c0c0;
+    --text-muted: #e5e4e2;
+    /* Accent */
+    --accent: #2a3439;
+    --accent-dim: #2a7a7a;
+    --accent-subtle: rgba(88, 166, 255, 0.1);
+    /* Status */
+    --green: #5ce0d6;
+    --green-subtle: rgba(92, 224, 214, 0.15);
+    --red: #8b0000;
+    --red-subtle: rgba(139, 0, 0, 0.15);
     --orange: #d29922;
-    --radius: 12px;
-    --radius-sm: 8px;
+    --orange-subtle: rgba(255, 90, 30, 0.2);
+    /* Icon / active tab */
+    --icon-color: #aed1d5;
+    --tab-active: #aed7f6;
+    /* Radii (powers of 2, max 8) */
+    --radius: 8px;
+    --radius-sm: 4px;
+    --radius-xs: 2px;
+    /* Spacing */
+    --space-3: 4px;
+    --space-4: 8px;
+    --space-5: 16px;
+    --space-6: 32px;
+    /* Touch targets */
+    --tap-min: 32px;
+    --tap-default: 64px;
+    /* Safe areas */
     --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
+    /* Motion */
+    --duration-fast: 0.1s;
+    --duration-normal: 0.15s;
+    --duration-slow: 0.3s;
+    /* Fonts */
+    --font-sans: 'JuliaMono', sans-serif;
+    --font-mono: 'JuliaMono', 'SF Mono', 'Cascadia Code', monospace;
+    --font-terminal: 'VT323', monospace;
+    --font-bitmap: 'Terminus', monospace;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,8 +55,8 @@ html, body {
     height: 100%;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    font-size: 15px;
+    font-family: var(--font-sans);
+    font-size: 16px;
     line-height: 1.5;
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
@@ -55,16 +89,16 @@ html, body {
     gap: 2px;
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: var(--icon-color);
     font-size: 10px;
     padding: 6px 0;
     cursor: pointer;
     min-height: 48px;
     justify-content: center;
-    transition: color 0.15s;
+    transition: color var(--duration-normal);
 }
 
-.nav-btn.active { color: var(--accent); }
+.nav-btn.active { color: var(--tab-active); }
 .nav-btn:active { transform: scale(0.92); }
 
 /* --- Main Content --- */
@@ -103,10 +137,10 @@ input, textarea {
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text);
-    font-size: 16px; /* prevents zoom on iOS */
-    padding: 12px;
+    font-size: 16px;
+    padding: var(--space-4);
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color var(--duration-normal);
     font-family: inherit;
 }
 
@@ -128,11 +162,11 @@ input::placeholder, textarea::placeholder {
     color: var(--text);
     border: none;
     border-radius: var(--radius-sm);
-    padding: 12px 20px;
-    font-size: 15px;
+    padding: 8px 16px;
+    font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    min-height: 48px;
+    min-height: var(--tap-default);
     transition: background 0.15s;
     width: 100%;
 }
@@ -150,7 +184,7 @@ input::placeholder, textarea::placeholder {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 16px;
+    padding: 16px;
     border-bottom: 1px solid var(--border);
     cursor: pointer;
     min-height: 52px;
@@ -294,7 +328,7 @@ input::placeholder, textarea::placeholder {
     padding: 12px;
     padding-top: 32px;
     overflow-x: auto;
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
     white-space: pre-wrap;
     word-break: break-all;
@@ -304,7 +338,7 @@ input::placeholder, textarea::placeholder {
     background: var(--bg-tertiary);
     padding: 2px 6px;
     border-radius: 4px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
 }
 
@@ -329,8 +363,8 @@ input::placeholder, textarea::placeholder {
     border: 1px solid var(--border);
     color: var(--text-muted);
     font-size: 12px;
-    padding: 6px 12px;
-    border-radius: 16px;
+    padding: 4px 8px;
+    border-radius: var(--radius);
     cursor: pointer;
     white-space: nowrap;
     min-height: 32px;
@@ -359,8 +393,8 @@ input::placeholder, textarea::placeholder {
     border: 1px solid var(--border);
     color: var(--text);
     font-size: 13px;
-    padding: 10px 14px;
-    border-radius: 20px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.15s;
 }
@@ -434,8 +468,8 @@ input::placeholder, textarea::placeholder {
     transform: translateX(-50%);
     background: var(--text);
     color: var(--bg);
-    padding: 10px 20px;
-    border-radius: 20px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
     font-size: 14px;
     font-weight: 500;
     z-index: 200;
@@ -481,7 +515,7 @@ input::placeholder, textarea::placeholder {
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 12px;
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.5;
     overflow-x: auto;
@@ -526,7 +560,7 @@ input::placeholder, textarea::placeholder {
     user-select: none;
     flex-shrink: 0;
     color: var(--text-muted);
-    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.5;
     border-right: 1px solid var(--border);
@@ -547,7 +581,7 @@ input::placeholder, textarea::placeholder {
 }
 
 .code-viewer-body pre code {
-    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.5;
     white-space: pre;
@@ -569,7 +603,7 @@ input::placeholder, textarea::placeholder {
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     color: var(--text);
-    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-family: var(--font-mono);
     font-size: 14px;
     line-height: 1.5;
     padding: 12px;
@@ -602,7 +636,7 @@ input::placeholder, textarea::placeholder {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     color: var(--text);
-    font-family: 'SF Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 14px;
     padding: 8px 12px;
     border-radius: 6px;
@@ -623,7 +657,7 @@ input::placeholder, textarea::placeholder {
     background: var(--bg-tertiary);
     border-radius: var(--radius-sm);
     padding: 8px;
-    font-family: 'SF Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 12px;
     line-height: 1.6;
     max-height: 40vh;
@@ -650,7 +684,7 @@ input::placeholder, textarea::placeholder {
 .badge {
     display: inline-block;
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: var(--radius);
     font-size: 12px;
     font-weight: 500;
 }
@@ -761,7 +795,7 @@ input::placeholder, textarea::placeholder {
     color: var(--text-muted);
     font-size: 12px;
     padding: 2px 8px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     font-weight: 400;
 }
 
@@ -923,9 +957,9 @@ input::placeholder, textarea::placeholder {
     background: #000;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 10px;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    font-size: 13px;
+    padding: 8px;
+    font-family: var(--font-terminal);
+    font-size: 16px;
     line-height: 1.5;
     min-height: 200px;
     max-height: 50vh;
@@ -947,14 +981,14 @@ input::placeholder, textarea::placeholder {
 
 .term-prompt {
     color: var(--green);
-    font-family: 'SF Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 16px;
     flex-shrink: 0;
 }
 
 .term-input-row input {
     flex: 1;
-    font-family: 'SF Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 14px;
 }
 
@@ -974,7 +1008,7 @@ input::placeholder, textarea::placeholder {
     background: rgba(88, 166, 255, 0.1);
     border: 1px solid rgba(88, 166, 255, 0.3);
     color: var(--accent);
-    font-family: 'SF Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 12px;
     padding: 6px 10px;
     border-radius: 6px;

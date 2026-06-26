@@ -1,0 +1,41 @@
+/* PhoneDev — Font faces */
+
+@font-face {
+  font-family: 'JuliaMono';
+  src: url('../assets/fonts/JuliaMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JuliaMono';
+  src: url('../assets/fonts/JuliaMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JuliaMono';
+  src: url('../assets/fonts/JuliaMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'VT323';
+  src: url('../assets/fonts/VT323-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Terminus';
+  src: url('../assets/fonts/Terminus.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
