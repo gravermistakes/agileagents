@@ -119,8 +119,12 @@ const ChatPage = {
     },
 
     setMode(mode) {
+        const input = document.getElementById('chat-input');
+        const draft = input ? input.value : '';
         this._systemPrompt = mode;
         this.render();
+        const newInput = document.getElementById('chat-input');
+        if (newInput && draft) newInput.value = draft;
         UI.toast('Mode: ' + this.MODES.find(m => m.key === mode)?.label);
     },
 
@@ -142,7 +146,7 @@ const ChatPage = {
         if (!text) return;
 
         if (this._pendingContext) {
-            text = this._pendingContext + text;
+            text = this._pendingContext + '\n\n' + text;
             this._pendingContext = '';
             this._pendingFileName = '';
         }
@@ -215,8 +219,9 @@ const ChatPage = {
                 const lastEntry = el.querySelectorAll('.tool-call-entry');
                 if (lastEntry.length > 0) {
                     const entry = lastEntry[lastEntry.length - 1];
-                    const preview = typeof data.result === 'string' ? data.result.slice(0, 200) : JSON.stringify(data.result).slice(0, 200);
-                    entry.innerHTML += `<div class="tool-call-result">${UI.escapeHtml(preview)}${data.result.length > 200 ? '...' : ''}</div>`;
+                    const resultStr = typeof data.result === 'string' ? data.result : JSON.stringify(data.result);
+                    const preview = resultStr.slice(0, 200);
+                    entry.innerHTML += `<div class="tool-call-result">${UI.escapeHtml(preview)}${resultStr.length > 200 ? '...' : ''}</div>`;
                 }
                 this.scrollToBottom();
             }

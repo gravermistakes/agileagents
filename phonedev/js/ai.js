@@ -138,7 +138,7 @@ const AI = {
     },
 
     _toGeminiSchema(schema) {
-        const typeMap = { string: 'STRING', number: 'NUMBER', object: 'OBJECT', array: 'ARRAY', boolean: 'BOOLEAN' };
+        const typeMap = { string: 'STRING', number: 'NUMBER', integer: 'INTEGER', object: 'OBJECT', array: 'ARRAY', boolean: 'BOOLEAN' };
         const result = { type: typeMap[schema.type] || schema.type };
         if (schema.description) result.description = schema.description;
         if (schema.properties) {
@@ -156,6 +156,7 @@ const AI = {
         switch (name) {
             case 'read_file': {
                 const file = await GitHub.getFileContent(args.owner, args.repo, args.path);
+                if (typeof file.content !== 'string') return `Error: ${args.path} is not a regular file (may be a symlink or submodule)`;
                 return `File: ${args.path} (${file.content.length} chars)\n\n${file.content}`;
             }
             case 'list_files': {
@@ -165,6 +166,7 @@ const AI = {
             }
             case 'edit_file': {
                 const file = await GitHub.getFileContent(args.owner, args.repo, args.path);
+                if (typeof file.content !== 'string') return `Error: ${args.path} is not a regular file — cannot edit`;
                 const editId = Date.now();
                 if (!ChatPage._pendingEdits) ChatPage._pendingEdits = [];
                 ChatPage._pendingEdits.push({
@@ -199,40 +201,46 @@ const AI = {
         ];
         const history = this._messages.slice(-16).filter(m => m.role === 'user' || (m.role === 'assistant' && m.content));
 
-        let iterations = 0;
-        while (iterations++ < 10) {
-            onProgress('thinking', null);
-            let response;
-            if (p.isGemini) {
-                response = await this._agentCallGemini(history, workingMessages, contextHint);
-            } else {
-                response = await this._agentCallOpenAI(history, workingMessages, contextHint, p);
-            }
+        this._messages.push({ role: 'user', content: userMessage });
 
-            if (response.tool_calls && response.tool_calls.length > 0) {
-                workingMessages.push({ role: 'assistant', content: response.content || null, tool_calls: response.tool_calls });
-                for (const tc of response.tool_calls) {
-                    const args = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : tc.arguments;
-                    onProgress('tool_call', { name: tc.name, args });
-                    let result;
-                    try {
-                        result = await this._executeTool(tc.name, args);
-                    } catch (e) {
-                        result = 'Error: ' + e.message;
-                    }
-                    onProgress('tool_result', { name: tc.name, result: typeof result === 'string' ? result.slice(0, 500) : result });
-                    workingMessages.push({ role: 'tool', tool_call_id: tc.id, name: tc.name, content: typeof result === 'string' ? result : JSON.stringify(result) });
+        let iterations = 0;
+        try {
+            while (iterations++ < 10) {
+                onProgress('thinking', null);
+                let response;
+                if (p.isGemini) {
+                    response = await this._agentCallGemini(history, workingMessages, contextHint);
+                } else {
+                    response = await this._agentCallOpenAI(history, workingMessages, contextHint, p);
                 }
-            } else {
-                const text = response.content || '';
-                if (!text) throw new Error('Empty agent response');
-                this._messages.push({ role: 'user', content: userMessage });
-                this._messages.push({ role: 'assistant', content: text });
-                await Storage.setJSON('chat_history', this._messages);
-                return text;
+
+                if (response.tool_calls && response.tool_calls.length > 0) {
+                    workingMessages.push({ role: 'assistant', content: response.content || null, tool_calls: response.tool_calls });
+                    for (const tc of response.tool_calls) {
+                        const args = typeof tc.arguments === 'string' ? JSON.parse(tc.arguments) : tc.arguments;
+                        onProgress('tool_call', { name: tc.name, args });
+                        let result;
+                        try {
+                            result = await this._executeTool(tc.name, args);
+                        } catch (e) {
+                            result = 'Error: ' + e.message;
+                        }
+                        onProgress('tool_result', { name: tc.name, result: typeof result === 'string' ? result.slice(0, 500) : result });
+                        workingMessages.push({ role: 'tool', tool_call_id: tc.id, name: tc.name, content: typeof result === 'string' ? result : JSON.stringify(result) });
+                    }
+                } else {
+                    const text = response.content || '';
+                    if (!text) throw new Error('Empty agent response');
+                    this._messages.push({ role: 'assistant', content: text });
+                    await Storage.setJSON('chat_history', this._messages);
+                    return text;
+                }
             }
+            throw new Error('Agent reached max tool iterations (10)');
+        } catch (e) {
+            this._messages.pop();
+            throw e;
         }
-        throw new Error('Agent reached max tool iterations (10)');
     },
 
     async _agentCallOpenAI(history, workingMessages, contextHint, provider) {
@@ -291,7 +299,7 @@ const AI = {
         if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
         const data = await res.json();
         const candidate = data.candidates?.[0];
-        if (!candidate?.content?.parts) throw new Error('Gemini: no response');
+        if (!candidate?.content?.parts?.length) throw new Error('Gemini: response blocked by safety filter');
         const parts = candidate.content.parts;
         const functionCalls = parts.filter(p => p.functionCall);
         if (functionCalls.length > 0) {
